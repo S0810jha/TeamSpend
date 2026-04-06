@@ -33,7 +33,11 @@ export default function CompanySpendChart({ data }: { data: { name: string, valu
             ))}
           </Pie>
           <Tooltip 
-            formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Spent']}
+            // 🟢 FIXED: Use Number() and handle potential undefined values to satisfy TypeScript
+            formatter={(value: any) => [
+              `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 
+              'Spent'
+            ]}
             contentStyle={{ borderRadius: '8px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)', fontSize: '12px', fontWeight: 'bold' }}
           />
           <Legend 
