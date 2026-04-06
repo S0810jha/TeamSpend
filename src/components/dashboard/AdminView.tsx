@@ -1,22 +1,47 @@
 import { createClient } from '@/utils/supabase/server';
 import CompanySpendChart from '@/components/dashboard/CompanySpendChart';
-import CompanyTrendChart from '@/components/dashboard/CompanyTrendChart'; // NEW IMPORT
+import CompanyTrendChart from '@/components/dashboard/CompanyTrendChart';
 import Link from 'next/link';
+
+// --- 🟢 ADDED TYPES TO FIX VERCEL ERROR 🟢 ---
+interface Budget {
+  total_amount: number;
+}
+
+interface Team {
+  id: string;
+  name: string;
+  budgets: Budget[] | Budget | null;
+}
+
+interface Expense {
+  id: string;
+  amount: number;
+  description: string;
+  category: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  created_at: string;
+  users: { full_name: string } | null;
+  teams: { id: string; name: string } | null;
+}
 
 export default async function AdminView({ profile }: { profile: any }) {
   const supabase = await createClient();
 
-  const { data: teams } = await supabase
+  const { data: teamsData } = await supabase
     .from('teams')
     .select('id, name, budgets(total_amount)')
     .eq('startup_id', profile.startup_id);
+
+  // Cast to our interface
+  const teams = (teamsData as unknown as Team[]) || [];
 
   const { count: employeeCount } = await supabase
     .from('users')
     .select('*', { count: 'exact', head: true })
     .eq('startup_id', profile.startup_id);
 
-  const { data: expenses } = await supabase
+  const { data: expensesData } = await supabase
     .from('expenses')
     .select(`
       id, amount, description, category, status, created_at,
@@ -25,8 +50,8 @@ export default async function AdminView({ profile }: { profile: any }) {
     .eq('startup_id', profile.startup_id)
     .order('created_at', { ascending: false });
 
-  // --- SEPARATE THE DATA ---
-  const allExpenses = expenses || [];
+  // Cast to our interface
+  const allExpenses = (expensesData as unknown as Expense[]) || [];
   const approvedExpenses = allExpenses.filter(e => e.status === 'APPROVED');
   const pendingExpenses = allExpenses.filter(e => e.status === 'PENDING');
   const recentExpenses = allExpenses.slice(0, 8);
@@ -34,16 +59,17 @@ export default async function AdminView({ profile }: { profile: any }) {
   // --- CORE CALCULATIONS ---
   const totalTeams = teams?.length || 0;
   const totalBudget = teams?.reduce((acc, team) => {
-    const teamBudget = Array.isArray(team.budgets) ? team.budgets[0]?.total_amount : team.budgets?.total_amount;
+    // FIXED: Strict checking for total_amount
+    const teamBudget = Array.isArray(team.budgets) ? team.budgets[0]?.total_amount : (team.budgets as Budget)?.total_amount;
     return acc + Number(teamBudget || 0);
   }, 0) || 0;
+  
   const totalSpent = approvedExpenses.reduce((acc, exp) => acc + Number(exp.amount), 0);
   const remainingBudget = totalBudget - totalSpent;
 
   // --- PIE CHART MATH ---
   const spendByTeamMap: Record<string, number> = {};
   approvedExpenses.forEach(exp => {
-    // @ts-ignore
     const teamName = exp.teams?.name || 'Unassigned';
     spendByTeamMap[teamName] = (spendByTeamMap[teamName] || 0) + Number(exp.amount);
   });
@@ -56,12 +82,15 @@ export default async function AdminView({ profile }: { profile: any }) {
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
   
   const monthlyDataMap: Record<string, number> = {};
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  
   for (let i = 5; i >= 0; i--) {
     const d = new Date();
     d.setMonth(d.getMonth() - i);
     monthlyDataMap[d.toLocaleString('default', { month: 'short' })] = 0;
   }
-  approvedExpenses.forEach((exp: any) => {
+
+  approvedExpenses.forEach((exp) => {
     const date = new Date(exp.created_at);
     if (date >= sixMonthsAgo) {
       const monthName = date.toLocaleString('default', { month: 'short' });
@@ -77,14 +106,14 @@ export default async function AdminView({ profile }: { profile: any }) {
 
   // --- TOP SPENDERS LEADERBOARD MATH ---
   const employeeSpendMap: Record<string, number> = {};
-  approvedExpenses.forEach((exp: any) => {
+  approvedExpenses.forEach((exp) => {
     const name = exp.users?.full_name || 'Unknown Employee';
     employeeSpendMap[name] = (employeeSpendMap[name] || 0) + Number(exp.amount);
   });
   const topSpenders = Object.keys(employeeSpendMap)
     .map(name => ({ name, total: employeeSpendMap[name] }))
     .sort((a, b) => b.total - a.total)
-    .slice(0, 5); // Grab the top 5 only
+    .slice(0, 5); 
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
@@ -149,11 +178,9 @@ export default async function AdminView({ profile }: { profile: any }) {
                 {pendingExpenses.slice(0, 3).map((exp) => (
                   <div key={exp.id} className="bg-white p-3 rounded-lg border border-amber-100 flex items-center justify-between">
                     <div>
-                      {/* @ts-ignore */}
                       <p className="text-xs font-bold text-slate-900">{exp.users?.full_name} <span className="text-slate-400 font-normal">({exp.teams?.name})</span></p>
                       <p className="text-[11px] text-slate-500 mt-0.5">${Number(exp.amount).toFixed(2)} - {exp.description}</p>
                     </div>
-                    {/* @ts-ignore */}
                     <Link href={`/dashboard/teams/${exp.teams?.id}`} className="text-[10px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded transition uppercase tracking-wider">
                       Review &rarr;
                     </Link>
@@ -186,11 +213,9 @@ export default async function AdminView({ profile }: { profile: any }) {
                   {recentExpenses.map((expense) => (
                     <tr key={expense.id} className="hover:bg-slate-50/80 transition duration-150">
                       <td className="px-5 py-3">
-                        {/* @ts-ignore */}
                         <div className="font-bold text-slate-800">{expense.users?.full_name || 'Unknown'}</div>
                         <div className="text-[10px] text-slate-400">{new Date(expense.created_at).toLocaleDateString()}</div>
                       </td>
-                      {/* @ts-ignore */}
                       <td className="px-5 py-3 font-medium text-slate-600">{expense.teams?.name || 'Unassigned'}</td>
                       <td className="px-5 py-3">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border
@@ -221,7 +246,6 @@ export default async function AdminView({ profile }: { profile: any }) {
         {/* RIGHT 1/3: ANALYTICS STACK */}
         <div className="xl:col-span-1 space-y-6 flex flex-col">
           
-          {/* Widget 1: Pie Chart */}
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col">
             <h3 className="text-sm font-bold text-slate-900 tracking-tight">Spend by Department</h3>
             <p className="text-[11px] text-slate-500 mb-2">Distribution of approved funds.</p>
@@ -230,7 +254,6 @@ export default async function AdminView({ profile }: { profile: any }) {
             </div>
           </div>
 
-          {/* Widget 2: Burn Rate Trend */}
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col">
             <h3 className="text-sm font-bold text-slate-900 tracking-tight">6-Month Burn Rate</h3>
             <p className="text-[11px] text-slate-500 mb-2">Company-wide spending trajectory.</p>
@@ -239,7 +262,6 @@ export default async function AdminView({ profile }: { profile: any }) {
             </div>
           </div>
 
-          {/* Widget 3: Top Spenders Leaderboard */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
             <div className="p-5 border-b border-slate-50">
               <h3 className="text-sm font-bold text-slate-900 tracking-tight">Top Spenders</h3>
