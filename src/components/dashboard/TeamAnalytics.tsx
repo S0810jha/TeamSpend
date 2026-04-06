@@ -5,7 +5,20 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
 
-export default function TeamAnalytics({ expenses, members }: { expenses: any[], members: any[] }) {
+// Added basic interfaces to avoid 'any' warnings
+interface Expense {
+  id: string;
+  amount: number;
+  category: string;
+  user_id: string;
+}
+
+interface Member {
+  id: string;
+  full_name: string;
+}
+
+export default function TeamAnalytics({ expenses, members }: { expenses: Expense[], members: Member[] }) {
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
 
   // Filter expenses based on the dropdown selection
@@ -17,7 +30,7 @@ export default function TeamAnalytics({ expenses, members }: { expenses: any[], 
   const totalSpent = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
 
   // Crunch data for the Recharts Pie Chart
-  const categoryTotals = filteredExpenses.reduce((acc: any, exp) => {
+  const categoryTotals = filteredExpenses.reduce((acc: Record<string, number>, exp) => {
     acc[exp.category] = (acc[exp.category] || 0) + Number(exp.amount);
     return acc;
   }, {});
@@ -34,7 +47,7 @@ export default function TeamAnalytics({ expenses, members }: { expenses: any[], 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col lg:flex-row overflow-hidden">
       
-      {/* Left Side: Controls & Dynamic Stats (Shaded sidebar look) */}
+      {/* Left Side: Controls & Dynamic Stats */}
       <div className="p-5 lg:w-1/3 bg-slate-50/50 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col">
         <div>
           <h3 className="text-sm font-bold text-slate-900 tracking-tight mb-1">Interactive Analytics</h3>
@@ -55,7 +68,6 @@ export default function TeamAnalytics({ expenses, members }: { expenses: any[], 
           </select>
         </div>
 
-        {/* Dynamic Metric Box */}
         <div className="mt-auto bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
           <p className="text-[11px] font-bold text-blue-600 mb-0.5 uppercase tracking-wide truncate">
             {selectedName}
@@ -89,7 +101,8 @@ export default function TeamAnalytics({ expenses, members }: { expenses: any[], 
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Spent']}
+                // 🟢 FIXED: Using 'any' and Number() to satisfy Recharts Formatter type requirements
+                formatter={(value: any) => [`$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Spent']}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)', fontSize: '12px', fontWeight: 'bold' }}
               />
               <Legend 
