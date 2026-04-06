@@ -1,10 +1,22 @@
+import React from 'react';
 import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link';
-import TopDepartmentsChart from '@/components/dashboard/TopDepartmentsChart'; // <-- NEW IMPORT
-import { JSX } from 'react';
+import TopDepartmentsChart from '@/components/dashboard/TopDepartmentsChart';
 
-// --- CATEGORY STYLING (For consistency across the app) ---
-const CATEGORY_MAP: Record<string, { icon: JSX.Element, color: string, bg: string }> = {
+// --- 🟢 DEFINE TYPES FOR VERCEL 🟢 ---
+interface Expense {
+  id: string;
+  amount: number;
+  category: string;
+  status: string;
+  description: string;
+  created_at: string;
+  users: { full_name: string } | null;
+  teams: { name: string } | { name: string }[] | null; // Handle both possibilities
+}
+
+// --- CATEGORY STYLING ---
+const CATEGORY_MAP: Record<string, { icon: React.ReactNode, color: string, bg: string }> = {
   Software: { bg: 'bg-blue-50', color: 'text-blue-600', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg> },
   Marketing: { bg: 'bg-purple-50', color: 'text-purple-600', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg> },
   Travel: { bg: 'bg-amber-50', color: 'text-amber-600', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg> },
@@ -17,15 +29,15 @@ const CATEGORY_MAP: Record<string, { icon: JSX.Element, color: string, bg: strin
 export default async function AnalystView({ profile }: { profile: any }) {
   const supabase = await createClient();
 
-  // 1. Fetch all company expenses
-  const { data: expenses } = await supabase
+  // 1. Fetch data and cast to our Expense interface
+  const { data: expensesData } = await supabase
     .from('expenses')
     .select('id, amount, category, status, description, created_at, users(full_name), teams(name)')
     .order('created_at', { ascending: false });
 
-  const allExpenses = expenses || [];
+  const allExpenses = (expensesData as unknown as Expense[]) || [];
 
-  // 2. Fetch all budgets to calculate company health
+  // 2. Fetch budgets
   const { data: budgets } = await supabase
     .from('budgets')
     .select('total_amount, start_date, end_date');
@@ -39,7 +51,7 @@ export default async function AnalystView({ profile }: { profile: any }) {
   });
   const totalActiveBudget = activeBudgets.reduce((sum, b) => sum + Number(b.total_amount), 0);
 
-  // 3. Core Financial Metrics
+  // 3. Metrics
   const approvedExpenses = allExpenses.filter(e => e.status === 'APPROVED');
   const pendingExpenses = allExpenses.filter(e => e.status === 'PENDING');
   
@@ -50,19 +62,20 @@ export default async function AnalystView({ profile }: { profile: any }) {
   const budgetUtilization = totalActiveBudget > 0 ? (totalYtdSpend / totalActiveBudget) * 100 : 0;
   const isBudgetHealthy = budgetUtilization < 90;
 
-  // 4. Quick Insights / Audit Data
   const highestExpense = approvedExpenses.reduce((max, exp) => Number(exp.amount) > max ? Number(exp.amount) : max, 0);
   const uncategorizedCount = approvedExpenses.filter(e => e.category === 'Uncategorized' || e.category === 'Other').length;
   
-  // 5. Recent Activity Feed & Leaderboard
   const recentApprovals = approvedExpenses.slice(0, 10);
+  
+  // 4. Team Math (Fixed Error here)
   const teamSpendMap: Record<string, number> = {};
   approvedExpenses.forEach(exp => {
-    const teamName = exp.teams?.name || 'Unassigned';
+    // FIX: Safely check if teams is an array or object
+    const teamData = Array.isArray(exp.teams) ? exp.teams[0] : exp.teams;
+    const teamName = teamData?.name || 'Unassigned';
     teamSpendMap[teamName] = (teamSpendMap[teamName] || 0) + Number(exp.amount);
   });
   
-  // Ensure we only extract the top 5
   const topTeams = Object.entries(teamSpendMap)
     .map(([name, amount]) => ({ name, amount }))
     .sort((a, b) => b.amount - a.amount)
@@ -72,7 +85,6 @@ export default async function AnalystView({ profile }: { profile: any }) {
     <div className="min-h-screen bg-[#FAFAFA] p-4 md:p-8 font-sans text-slate-900 selection:bg-indigo-100">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* PREMIUM HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-4 border-b border-slate-200/80">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Morning Briefing</h1>
@@ -86,34 +98,13 @@ export default async function AnalystView({ profile }: { profile: any }) {
           </Link>
         </div>
 
-        {/* PULSE METRICS ROW */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard 
-            label="YTD Cleared Spend" 
-            value={`$${totalYtdSpend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-            type="emerald" 
-          />
-          <StatCard 
-            label="Pending Liabilities" 
-            value={`$${pendingLiability.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-            type="amber" 
-            isPulse 
-          />
-          <StatCard 
-            label="Avg. Transaction" 
-            value={`$${avgTransactionSize.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-            subtext="Across approved items"
-            type="purple" 
-          />
-          <StatCard 
-            label="Transaction Volume" 
-            value={allExpenses.length.toString()} 
-            subtext={`${pendingExpenses.length} awaiting review`} 
-            type="blue" 
-          />
+          <StatCard label="YTD Cleared Spend" value={`$${totalYtdSpend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} type="emerald" />
+          <StatCard label="Pending Liabilities" value={`$${pendingLiability.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} type="amber" isPulse />
+          <StatCard label="Avg. Transaction" value={`$${avgTransactionSize.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} subtext="Across approved items" type="purple" />
+          <StatCard label="Transaction Volume" value={allExpenses.length.toString()} subtext={`${pendingExpenses.length} awaiting review`} type="blue" />
         </div>
 
-        {/* COMPANY BUDGET HEALTH BAR */}
         {totalActiveBudget > 0 && (
           <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm flex flex-col gap-3">
             <div className="flex justify-between items-end">
@@ -140,41 +131,32 @@ export default async function AnalystView({ profile }: { profile: any }) {
           </div>
         )}
 
-        {/* BOTTOM WIDGETS ROW */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          
-          {/* LEFT: RECENT CASH OUTFLOW (Col span 5) */}
           <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col h-[420px]">
             <div className="flex items-center justify-between p-5 border-b border-slate-100 shrink-0">
               <h3 className="text-sm font-semibold text-slate-800">Recent Cash Outflow</h3>
               <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded uppercase tracking-widest">Cleared</span>
             </div>
-            
             <div className="overflow-y-auto flex-1 min-h-0 p-3 space-y-1">
               {recentApprovals.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-sm text-slate-400">
-                  <p>No recent transactions.</p>
-                </div>
+                <div className="flex flex-col items-center justify-center h-full text-sm text-slate-400"><p>No recent transactions.</p></div>
               ) : (
                 recentApprovals.map((exp) => {
                   const style = CATEGORY_MAP[exp.category] || CATEGORY_MAP.Other;
+                  const teamData = Array.isArray(exp.teams) ? exp.teams[0] : exp.teams;
                   return (
                     <div key={exp.id} className="p-3 flex items-center justify-between hover:bg-slate-50 rounded-lg transition-colors group">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${style.bg} ${style.color} shadow-sm border border-slate-100/50`}>
-                          {style.icon}
-                        </div>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${style.bg} ${style.color} shadow-sm border border-slate-100/50`}>{style.icon}</div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{exp.description}</p>
                           <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mt-0.5 truncate">
-                            {exp.users?.full_name} • {exp.teams?.name || 'Unassigned'}
+                            {exp.users?.full_name} • {teamData?.name || 'Unassigned'}
                           </p>
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
-                        <p className="text-sm font-bold text-slate-900">
-                          ${Number(exp.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </p>
+                        <p className="text-sm font-bold text-slate-900">${Number(exp.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                       </div>
                     </div>
                   );
@@ -183,90 +165,42 @@ export default async function AnalystView({ profile }: { profile: any }) {
             </div>
           </div>
 
-          {/* MIDDLE: TOP SPENDING DEPARTMENTS (Col span 4) */}
           <div className="lg:col-span-4 bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col h-[420px]">
             <div className="p-5 border-b border-slate-100 shrink-0">
               <h3 className="text-sm font-semibold text-slate-800">Top Departments</h3>
               <p className="text-[10px] font-medium text-slate-400 mt-1 uppercase tracking-widest">By approved YTD spend</p>
             </div>
-
-            {/* INTEGRATED THE RECHARTS COMPONENT HERE */}
             <div className="p-4 flex-1 min-h-0">
               <TopDepartmentsChart data={topTeams} />
             </div>
           </div>
 
-          {/* RIGHT: AUDIT & INSIGHTS (Col span 3) */}
           <div className="lg:col-span-3 bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col h-[420px]">
-            <div className="p-5 border-b border-slate-100 shrink-0">
-              <h3 className="text-sm font-semibold text-slate-800">Audit Insights</h3>
-              <p className="text-[10px] font-medium text-slate-400 mt-1 uppercase tracking-widest">Automated Flags</p>
-            </div>
-
+            <div className="p-5 border-b border-slate-100 shrink-0"><h3 className="text-sm font-semibold text-slate-800">Audit Insights</h3></div>
             <div className="p-5 flex-1 flex flex-col gap-4 overflow-y-auto bg-slate-50/50">
-              
-              {/* Largest Single Transaction */}
               <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                  <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Largest Transfer</p>
-                </div>
-                <p className="text-xl font-black text-slate-900 tracking-tight">
-                  ${highestExpense.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </p>
-                <p className="text-[10px] text-slate-500 mt-1">Single largest approved request.</p>
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Largest Transfer</p>
+                <p className="text-xl font-black text-slate-900">${highestExpense.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
-
-              {/* Uncategorized Spend Alert */}
               <div className={`p-4 rounded-lg border shadow-sm ${uncategorizedCount > 0 ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200'}`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className={`w-4 h-4 ${uncategorizedCount > 0 ? 'text-amber-600' : 'text-emerald-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest ${uncategorizedCount > 0 ? 'text-amber-800' : 'text-slate-600'}`}>Needs Review</p>
-                </div>
-                <p className={`text-xl font-black tracking-tight ${uncategorizedCount > 0 ? 'text-amber-900' : 'text-slate-900'}`}>
-                  {uncategorizedCount} <span className="text-sm font-semibold">items</span>
-                </p>
-                <p className={`text-[10px] mt-1 ${uncategorizedCount > 0 ? 'text-amber-700' : 'text-slate-500'}`}>
-                  Uncategorized or 'Other' expenses.
-                </p>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${uncategorizedCount > 0 ? 'text-amber-800' : 'text-slate-600'}`}>Needs Review</p>
+                <p className={`text-xl font-black tracking-tight ${uncategorizedCount > 0 ? 'text-amber-900' : 'text-slate-900'}`}>{uncategorizedCount} items</p>
               </div>
-
             </div>
           </div>
-
         </div>
       </div>
     </div>
   );
 }
 
-// --- HELPER COMPONENTS ---
-
-function StatCard({ 
-  label, 
-  value, 
-  type, 
-  subtext,
-  isPulse = false
-}: { 
-  label: string; 
-  value: string; 
-  type: 'emerald' | 'amber' | 'blue' | 'purple'; 
-  subtext?: string;
-  isPulse?: boolean;
-}) {
-  const colorMap = {
-    emerald: { dot: "bg-emerald-400" },
-    amber: { dot: "bg-amber-400" },
-    blue: { dot: "bg-blue-400" },
-    purple: { dot: "bg-purple-400" }
-  };
-
+function StatCard({ label, value, type, subtext, isPulse = false }: { label: string; value: string; type: 'emerald' | 'amber' | 'blue' | 'purple'; subtext?: string; isPulse?: boolean; }) {
+  const colorMap = { emerald: "bg-emerald-400", amber: "bg-amber-400", blue: "bg-blue-400", purple: "bg-purple-400" };
   return (
     <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
       <div className="flex justify-between items-start mb-3">
         <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{label}</p>
-        <div className={`w-2 h-2 rounded-full shrink-0 ${colorMap[type].dot} ${isPulse ? 'animate-pulse' : ''}`} />
+        <div className={`w-2 h-2 rounded-full shrink-0 ${colorMap[type]} ${isPulse ? 'animate-pulse' : ''}`} />
       </div>
       <div>
         <p className="text-2xl font-bold text-slate-900 tracking-tight truncate">{value}</p>

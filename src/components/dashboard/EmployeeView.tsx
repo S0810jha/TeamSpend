@@ -1,6 +1,7 @@
 import { getUserProfile } from '@/utils/getUser';
 import { createClient } from '@/utils/supabase/server';
 import SubmitExpenseForm from '@/components/dashboard/SubmitExpenseForm';
+import { JSX } from 'react';
 
 // --- CONFIGURATION FOR DYNAMIC CATEGORY STYLING ---
 const CATEGORY_MAP: Record<string, { icon: JSX.Element, color: string, bg: string, barBg: string }> = {
