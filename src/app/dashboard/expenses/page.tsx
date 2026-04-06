@@ -2,6 +2,7 @@ import { getUserProfile } from '@/utils/getUser';
 import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link';
 import DeleteExpenseButton from '@/components/dashboard/DeleteExpenseButton';
+import { JSX } from 'react';
 
 // --- CONFIGURATION FOR DYNAMIC CATEGORY STYLING ---
 const CATEGORY_MAP: Record<string, { icon: JSX.Element, color: string, bg: string }> = {
@@ -207,7 +208,7 @@ function StatCard({ label, count, type }: { label: string, count: number, type: 
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles: any = {
+  const styles: Record<string, string> = {
     APPROVED: "text-emerald-700 bg-emerald-50 border-emerald-200",
     PENDING: "text-amber-700 bg-amber-50 border-amber-200",
     REJECTED: "text-rose-700 bg-rose-50 border-rose-200"

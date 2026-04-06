@@ -73,8 +73,8 @@ export const POST = async (request: Request) => {
 
         return NextResponse.json({ success: true, teamId: newTeam.id }, { status: 200 });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error("🚨 SERVER FATAL ERROR:", error);
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });   
+        return NextResponse.json({ error: error || 'Internal Server Error' }, { status: 500 });   
     }
 }

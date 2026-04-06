@@ -6,7 +6,31 @@ import EmployeeMonthlyChart from '@/components/dashboard/EmployeeMonthlyChart';
 import Link from 'next/link';
 import { JSX } from 'react';
 
-// --- CATEGORY STYLING (With Hex for Recharts) ---
+// --- TYPES FOR TYPE SAFETY ---
+interface Expense {
+  id: string;
+  amount: number;
+  description: string;
+  category: string;
+  status: string;
+  created_at: string;
+  team_id: string | null;
+  users: { full_name: string; role: string } | null;
+  teams: { id: string; name: string } | null;
+}
+
+interface Team {
+  id: string;
+  name: string;
+}
+
+// Monthly data object for the chart
+type MonthlyDataEntry = {
+  month: string;
+  [employeeName: string]: string | number; // Allows dynamic employee name keys
+};
+
+// --- CATEGORY STYLING ---
 const CATEGORY_MAP: Record<string, { icon: JSX.Element, color: string, bg: string, hex: string }> = {
   Software: { bg: 'bg-blue-50', color: 'text-blue-600', hex: '#3b82f6', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg> },
   Marketing: { bg: 'bg-purple-50', color: 'text-purple-600', hex: '#a855f7', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg> },
@@ -39,32 +63,33 @@ export default async function AnalystReportsPage({
   const resolvedParams = await searchParams;
   const currentTeamFilter = resolvedParams?.team || 'ALL';
 
-  // 1. Fetch Expenses & Teams ONLY FOR THIS STARTUP
-  const { data: allExpenses } = await supabase
+  // 1. Fetch data with casting to remove 'any'
+  const { data: allExpensesData } = await supabase
     .from('expenses')
     .select('id, amount, description, category, status, created_at, team_id, users(full_name, role), teams(id, name)')
     .eq('startup_id', profile.startup_id)
     .order('created_at', { ascending: true }); 
+
+  const allExpenses = (allExpensesData as unknown as Expense[]) || [];
 
   const { data: teamsData } = await supabase
     .from('teams')
     .select('id, name')
     .eq('startup_id', profile.startup_id); 
     
-  const teamsList = teamsData || [];
+  const teamsList = (teamsData as unknown as Team[]) || [];
 
-  // 2. Apply Team Filter
-  const expenses = allExpenses || [];
+  // 2. Apply Filters
   const filteredExpenses = currentTeamFilter === 'ALL' 
-    ? expenses 
-    : expenses.filter(e => e.teams?.id === currentTeamFilter);
+    ? allExpenses 
+    : allExpenses.filter(e => e.teams?.id === currentTeamFilter);
 
   const approvedExpenses = filteredExpenses.filter(e => e.status === 'APPROVED');
   const pendingExpenses = filteredExpenses.filter(e => e.status === 'PENDING');
 
-  // --- DATA CRUNCHING FOR CHARTS ---
+  // --- DATA CRUNCHING ---
 
-  // 1. Monthly Burn Rate Line Chart
+  // 1. Line Chart
   const monthlyDataMap: Record<string, number> = {};
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   monthNames.forEach(m => monthlyDataMap[m] = 0);
@@ -79,17 +104,16 @@ export default async function AnalystReportsPage({
 
   const chartMonthlyData = monthNames.map(month => ({ month, spend: monthlyDataMap[month] }));
 
-  // 2. Category Donut Chart
+  // 2. Donut Chart
   const chartCategoryData = Object.keys(CATEGORY_MAP).map(cat => {
     const total = approvedExpenses.filter(e => e.category === cat).reduce((sum, e) => sum + Number(e.amount), 0);
     return { name: cat, value: total, color: CATEGORY_MAP[cat].hex };
   }).filter(data => data.value > 0); 
 
-  // 3. Monthly Spend PER EMPLOYEE (Stacked Bar Chart Logic)
-  const monthlyEmployeeDataMap: Record<string, any> = {};
+  // 3. Stacked Employee Chart (No 'any' in map)
+  const monthlyEmployeeDataMap: Record<string, MonthlyDataEntry> = {};
   const uniqueEmployees = new Set<string>();
 
-  // Initialize the object with every month so the chart is fully drawn
   monthNames.forEach(m => {
     monthlyEmployeeDataMap[m] = { month: m };
   });
@@ -99,34 +123,25 @@ export default async function AnalystReportsPage({
     if (date.getFullYear() === new Date().getFullYear()) {
       const monthStr = monthNames[date.getMonth()];
       const empName = exp.users?.full_name || 'Unknown';
-      
-      // Keep a master list of all employee names we encounter
       uniqueEmployees.add(empName);
       
-      // Add this expense to that specific employee's monthly total
-      if (!monthlyEmployeeDataMap[monthStr][empName]) {
-        monthlyEmployeeDataMap[monthStr][empName] = 0;
-      }
-      monthlyEmployeeDataMap[monthStr][empName] += Number(exp.amount);
+      const currentVal = monthlyEmployeeDataMap[monthStr][empName] as number || 0;
+      monthlyEmployeeDataMap[monthStr][empName] = currentVal + Number(exp.amount);
     }
   });
 
-  // Convert the map object back into an array for Recharts
   const chartMonthlyEmployeeData = monthNames.map(m => monthlyEmployeeDataMap[m]);
   const employeeNames = Array.from(uniqueEmployees);
 
-  // --- TOP LEVEL METRICS ---
+  // Stats
   const totalYtdSpend = approvedExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const totalPendingLiability = pendingExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
-
-  // Reverse array for ledger (newest first)
   const ledgerExpenses = [...approvedExpenses].reverse();
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] p-4 md:p-8 font-sans text-slate-900 selection:bg-indigo-100">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* PREMIUM HEADER & EXPORT */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-4 border-b border-slate-200/80">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Deep Dive Reports</h1>
@@ -134,14 +149,12 @@ export default async function AnalystReportsPage({
               {currentTeamFilter === 'ALL' ? 'Company-Wide' : 'Department'} Analytics • {new Date().getFullYear()}
             </p>
           </div>
-          
           <ExportCsvButton 
             data={approvedExpenses} 
             filename={`vaultpay_export_${currentTeamFilter === 'ALL' ? 'company' : currentTeamFilter}`} 
           />
         </div>
 
-        {/* DYNAMIC TEAM FILTER PILLS */}
         <div className="flex flex-wrap gap-2 pt-2">
           <Link 
             href="?team=ALL" 
@@ -161,14 +174,13 @@ export default async function AnalystReportsPage({
                 currentTeamFilter === team.id 
                   ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm' 
                   : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            {team.name}
-          </Link>
+              }`}
+            >
+              {team.name}
+            </Link>
           ))}
         </div>
 
-        {/* HIGH-LEVEL METRICS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-slate-900 p-5 rounded-xl shadow-lg border border-slate-800 flex flex-col justify-between relative overflow-hidden transition-transform hover:scale-[1.01]">
             <div className="absolute -right-6 -top-6 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -181,28 +193,13 @@ export default async function AnalystReportsPage({
             </p>
           </div>
           
-          <StatCard 
-            label="Pending Liabilities" 
-            value={`$${totalPendingLiability.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-            subtext="Awaiting approval" 
-            type="amber"
-            isPulse
-          />
-          <StatCard 
-            label="Transaction Volume" 
-            value={approvedExpenses.length.toString()} 
-            subtext="Total approved transactions" 
-            type="blue"
-          />
+          <StatCard label="Pending Liabilities" value={`$${totalPendingLiability.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} subtext="Awaiting approval" type="amber" isPulse />
+          <StatCard label="Transaction Volume" value={approvedExpenses.length.toString()} subtext="Total approved transactions" type="blue" />
         </div>
 
-        {/* INTERACTIVE CHARTS */}
         <AnalystCharts monthlyData={chartMonthlyData} categoryData={chartCategoryData} />
 
-        {/* --- BOTTOM ROW: EMPLOYEE SPEND CHART & LEDGER --- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          
-          {/* MONTHLY EMPLOYEE SPEND INTERACTIVE CHART */}
           <div className="lg:col-span-4 bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col h-[500px]">
             <div className="p-5 border-b border-slate-100 shrink-0">
               <h3 className="text-sm font-semibold text-slate-800">Monthly Employee Spend</h3>
@@ -210,29 +207,22 @@ export default async function AnalystReportsPage({
                 {currentTeamFilter === 'ALL' ? 'Across all teams' : 'Within selected team'}
               </p>
             </div>
-
             <div className="p-5 flex-1 min-h-0">
-              <EmployeeMonthlyChart 
-                data={chartMonthlyEmployeeData} 
-                employeeNames={employeeNames} 
-              />
+              <EmployeeMonthlyChart data={chartMonthlyEmployeeData} employeeNames={employeeNames} />
             </div>
           </div>
 
-          {/* MASTER LEDGER TABLE */}
           <div className="lg:col-span-8 bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col overflow-hidden h-[500px]">
             <div className="p-5 border-b border-slate-100 bg-white shrink-0 flex justify-between items-center">
               <h3 className="text-sm font-semibold text-slate-800">Ledger</h3>
               <span className="text-[9px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded uppercase tracking-widest">Approved Transactions</span>
             </div>
-            
             <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-200/80 bg-slate-50/80 text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
               <div className="col-span-4 md:col-span-3">Date & Team</div>
               <div className="hidden md:block md:col-span-3">Employee</div>
               <div className="col-span-5 md:col-span-4">Category & Desc.</div>
               <div className="col-span-3 md:col-span-2 text-right">Amount</div>
             </div>
-
             <div className="divide-y divide-slate-100 overflow-y-auto flex-1 min-h-0">
               {ledgerExpenses.length === 0 ? (
                 <div className="p-10 flex flex-col items-center justify-center h-full text-center">
@@ -274,15 +264,11 @@ export default async function AnalystReportsPage({
               )}
             </div>
           </div>
-
         </div>
-
       </div>
     </div>
   );
 }
-
-// --- HELPER COMPONENTS ---
 
 function StatCard({ 
   label, 

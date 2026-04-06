@@ -146,7 +146,7 @@ const UsersPage = async ({ searchParams }: { searchParams: Promise<{ page?: stri
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {users?.map((user) => {
-                    // @ts-ignore
+                    
                     const teamData = user.team_members?.[0]?.teams;
                     const teamName = teamData?.name || 'Unassigned';
                     const teamId = teamData?.id || null;

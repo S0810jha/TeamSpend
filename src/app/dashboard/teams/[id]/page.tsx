@@ -10,6 +10,34 @@ import AdjustBudgetModal from '@/components/dashboard/AdjustBudgetModal';
 import PendingApprovalsList from '@/components/dashboard/PendingApprovalsList';
 import TeamTrendChart from '@/components/dashboard/TeamTrendChart';
 
+// --- 🟢 TYPES & INTERFACES 🟢 ---
+interface Expense {
+  id: string;
+  amount: number;
+  description: string;
+  category: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  created_at: string;
+  user_id: string;
+  users: { full_name: string } | null;
+}
+
+interface Budget {
+  id: string;
+  total_amount: number;
+  start_date: string;
+  end_date: string;
+}
+
+interface TeamMember {
+  users: {
+    id: string;
+    full_name: string;
+    email: string;
+    role: string;
+  } | null;
+}
+
 export default async function TeamDashboard({ params }: { params: Promise<{ id: string }> }) {
   const { profile } = await getUserProfile();
   if (profile.role !== 'ADMIN') redirect('/dashboard');
@@ -18,6 +46,7 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
   const resolvedParams = await params;
   const teamId = resolvedParams.id;
 
+  // Type the Supabase response
   const { data: team, error } = await supabase
     .from('teams')
     .select(`
@@ -32,12 +61,14 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
   if (error || !team) redirect('/dashboard/teams');
 
   // --- 1. DATA SEPARATION ---
-  const budgetObj = Array.isArray(team.budgets) ? team.budgets[0] : team.budgets;
+  // Safely handle the budget object with type casting
+  const budgetData = team.budgets as unknown as Budget[];
+  const budgetObj = Array.isArray(budgetData) ? budgetData[0] : budgetData;
   const totalBudget = Number(budgetObj?.total_amount || 0);
   
-  const allExpenses = team.expenses || [];
-  const pendingExpenses = allExpenses.filter((e: any) => e.status === 'PENDING');
-  const approvedExpenses = allExpenses.filter((e: any) => e.status === 'APPROVED');
+  const allExpenses = (team.expenses as unknown as Expense[]) || [];
+  const pendingExpenses = allExpenses.filter((e) => e.status === 'PENDING');
+  const approvedExpenses = allExpenses.filter((e) => e.status === 'APPROVED');
 
   // --- 2. BUDGET MATH (APPROVED ONLY) ---
   const totalSpent = approvedExpenses.reduce((acc, exp) => acc + Number(exp.amount), 0);
@@ -87,7 +118,7 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
     monthlyDataMap[d.toLocaleString('default', { month: 'short' })] = 0;
   }
 
-  approvedExpenses.forEach((exp: any) => {
+  approvedExpenses.forEach((exp) => {
     const date = new Date(exp.created_at);
     if (date >= sixMonthsAgo) {
       const monthName = date.toLocaleString('default', { month: 'short' });
@@ -104,7 +135,7 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
 
   // --- TOP MERCHANTS MATH ---
   const merchantMap: Record<string, number> = {};
-  approvedExpenses.forEach((exp: any) => {
+  approvedExpenses.forEach((exp) => {
     const merchant = exp.description || 'Unknown Vendor';
     merchantMap[merchant] = (merchantMap[merchant] || 0) + Number(exp.amount);
   });
@@ -114,14 +145,15 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
     .sort((a, b) => b.total - a.total)
     .slice(0, 5); 
 
-  const members = team.team_members?.map((m: any) => m.users) || [];
+  // Safely map members
+  const membersData = (team.team_members as unknown as TeamMember[]) || [];
+  const members = membersData.map((m) => m.users).filter(Boolean);
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
       
       {/* 🟢 PERFECTED HEADER 🟢 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-        {/* Left Side: Titles */}
         <div>
           <Link href="/dashboard/teams" className="text-xs font-bold text-blue-600 hover:text-blue-800 mb-1.5 inline-flex items-center gap-1 transition uppercase tracking-wider">
             &larr; Back to Teams
@@ -130,7 +162,6 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
           <p className="text-sm font-medium text-slate-500 mt-0.5">Financial overview and employee spending limits.</p>
         </div>
         
-        {/* Right Side: Grouped Buttons */}
         <div className="flex items-center gap-3 shrink-0 mt-2 sm:mt-0">
           <TeamTransactionsPanel expenses={allExpenses} />
           
@@ -193,11 +224,10 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
 
       </div>
 
-      <TeamAnalytics expenses={approvedExpenses} members={members} />
+      {/* Passing proper typed arrays */}
+      <TeamAnalytics expenses={approvedExpenses} members={members as any} />
 
-      {/* BOTTOM ROW: Trend & Merchants */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         <div className="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col">
           <h3 className="text-sm font-bold text-slate-900 tracking-tight">6-Month Spending Trend</h3>
           <p className="text-[11px] text-slate-500 mb-2">Approved expenses mapped over the previous 6 calendar months.</p>
@@ -234,7 +264,6 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
           </div>
         </div>
       </div>
-
     </div>
   );
 }
