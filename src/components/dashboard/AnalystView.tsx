@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link';
 import TopDepartmentsChart from '@/components/dashboard/TopDepartmentsChart'; // <-- NEW IMPORT
+import { JSX } from 'react';
 
 // --- CATEGORY STYLING (For consistency across the app) ---
 const CATEGORY_MAP: Record<string, { icon: JSX.Element, color: string, bg: string }> = {
