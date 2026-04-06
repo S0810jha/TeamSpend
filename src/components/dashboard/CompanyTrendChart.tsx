@@ -24,9 +24,13 @@ export default function CompanyTrendChart({ data }: { data: { name: string, tota
           />
           <Tooltip
             cursor={{ fill: '#f8fafc' }}
-            formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Spent']}
+            // 🟢 FIXED: Use 'any' or 'ValueType' to handle potential undefined values from Recharts
+            formatter={(value: any) => [
+              `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 
+              'Spent'
+            ]}
             contentStyle={{ borderRadius: '8px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)', fontSize: '12px', fontWeight: 'bold' }}
-            labelStyle={{ display: 'none' }} // Hides the month label in the tooltip for a cleaner look
+            labelStyle={{ display: 'none' }}
           />
           <Bar dataKey="total" radius={[4, 4, 0, 0]}>
             {data.map((entry, index) => (
