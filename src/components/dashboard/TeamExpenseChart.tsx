@@ -38,7 +38,8 @@ export default function TeamExpenseChart({ data }: { data: { name: string, value
             ))}
           </Pie>
           <Tooltip 
-            formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Spent']}
+            // 🟢 FIXED: Changed 'value: number' to 'value: any' and wrapped in Number()
+            formatter={(value: any) => [`$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Spent']}
             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
           />
           <Legend verticalAlign="bottom" height={36} iconType="circle" />

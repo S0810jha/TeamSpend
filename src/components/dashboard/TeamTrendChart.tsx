@@ -25,7 +25,7 @@ export default function TeamTrendChart({ data }: { data: { name: string, total: 
           />
           <Tooltip
             cursor={{ fill: '#f8fafc' }}
-            formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Spent']}
+            formatter={(value: any) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Spent']}
             contentStyle={{ borderRadius: '8px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)', fontSize: '12px', fontWeight: 'bold' }}
           />
           <Bar dataKey="total" radius={[6, 6, 0, 0]}>
