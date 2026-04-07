@@ -6,11 +6,9 @@ export default function UserFilters({ teams }: { teams: { id: string; name: stri
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get current filter values from the URL
   const currentRole = searchParams.get("role") || "";
   const currentTeam = searchParams.get("team") || "";
 
-  // When a dropdown changes, update the URL and reset to page 1
   const handleFilterChange = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     
@@ -20,7 +18,7 @@ export default function UserFilters({ teams }: { teams: { id: string; name: stri
       params.delete(key);
     }
     
-    params.set("page", "1"); // Always go back to page 1 when changing filters
+    params.set("page", "1"); 
     router.push(`?${params.toString()}`);
   };
 

@@ -24,7 +24,6 @@ export default function CompanyTrendChart({ data }: { data: { name: string, tota
           />
           <Tooltip
             cursor={{ fill: '#f8fafc' }}
-            // 🟢 FIXED: Use 'any' or 'ValueType' to handle potential undefined values from Recharts
             formatter={(value: any) => [
               `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 
               'Spent'

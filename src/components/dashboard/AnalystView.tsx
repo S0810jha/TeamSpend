@@ -3,7 +3,6 @@ import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link';
 import TopDepartmentsChart from '@/components/dashboard/TopDepartmentsChart';
 
-// --- 🟢 DEFINE TYPES FOR VERCEL 🟢 ---
 interface Expense {
   id: string;
   amount: number;
@@ -12,10 +11,9 @@ interface Expense {
   description: string;
   created_at: string;
   users: { full_name: string } | null;
-  teams: { name: string } | { name: string }[] | null; // Handle both possibilities
+  teams: { name: string } | { name: string }[] | null; 
 }
 
-// --- CATEGORY STYLING ---
 const CATEGORY_MAP: Record<string, { icon: React.ReactNode, color: string, bg: string }> = {
   Software: { bg: 'bg-blue-50', color: 'text-blue-600', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg> },
   Marketing: { bg: 'bg-purple-50', color: 'text-purple-600', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg> },
@@ -29,7 +27,6 @@ const CATEGORY_MAP: Record<string, { icon: React.ReactNode, color: string, bg: s
 export default async function AnalystView({ profile }: { profile: any }) {
   const supabase = await createClient();
 
-  // 1. Fetch data and cast to our Expense interface
   const { data: expensesData } = await supabase
     .from('expenses')
     .select('id, amount, category, status, description, created_at, users(full_name), teams(name)')
@@ -37,7 +34,6 @@ export default async function AnalystView({ profile }: { profile: any }) {
 
   const allExpenses = (expensesData as unknown as Expense[]) || [];
 
-  // 2. Fetch budgets
   const { data: budgets } = await supabase
     .from('budgets')
     .select('total_amount, start_date, end_date');
@@ -51,7 +47,6 @@ export default async function AnalystView({ profile }: { profile: any }) {
   });
   const totalActiveBudget = activeBudgets.reduce((sum, b) => sum + Number(b.total_amount), 0);
 
-  // 3. Metrics
   const approvedExpenses = allExpenses.filter(e => e.status === 'APPROVED');
   const pendingExpenses = allExpenses.filter(e => e.status === 'PENDING');
   
@@ -67,10 +62,8 @@ export default async function AnalystView({ profile }: { profile: any }) {
   
   const recentApprovals = approvedExpenses.slice(0, 10);
   
-  // 4. Team Math (Fixed Error here)
   const teamSpendMap: Record<string, number> = {};
   approvedExpenses.forEach(exp => {
-    // FIX: Safely check if teams is an array or object
     const teamData = Array.isArray(exp.teams) ? exp.teams[0] : exp.teams;
     const teamName = teamData?.name || 'Unassigned';
     teamSpendMap[teamName] = (teamSpendMap[teamName] || 0) + Number(exp.amount);

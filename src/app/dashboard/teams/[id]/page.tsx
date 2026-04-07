@@ -3,14 +3,12 @@ import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
-// Import our new interactive client components
 import TeamAnalytics from '@/components/dashboard/TeamAnalytics';
 import TeamTransactionsPanel from '@/components/dashboard/TeamTransactionsPanel';
 import AdjustBudgetModal from '@/components/dashboard/AdjustBudgetModal'; 
 import PendingApprovalsList from '@/components/dashboard/PendingApprovalsList';
 import TeamTrendChart from '@/components/dashboard/TeamTrendChart';
 
-// --- 🟢 TYPES & INTERFACES 🟢 ---
 interface Expense {
   id: string;
   amount: number;
@@ -46,7 +44,6 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
   const resolvedParams = await params;
   const teamId = resolvedParams.id;
 
-  // Type the Supabase response
   const { data: team, error } = await supabase
     .from('teams')
     .select(`
@@ -60,8 +57,6 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
 
   if (error || !team) redirect('/dashboard/teams');
 
-  // --- 1. DATA SEPARATION ---
-  // Safely handle the budget object with type casting
   const budgetData = team.budgets as unknown as Budget[];
   const budgetObj = Array.isArray(budgetData) ? budgetData[0] : budgetData;
   const totalBudget = Number(budgetObj?.total_amount || 0);
@@ -70,7 +65,6 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
   const pendingExpenses = allExpenses.filter((e) => e.status === 'PENDING');
   const approvedExpenses = allExpenses.filter((e) => e.status === 'APPROVED');
 
-  // --- 2. BUDGET MATH (APPROVED ONLY) ---
   const totalSpent = approvedExpenses.reduce((acc, exp) => acc + Number(exp.amount), 0);
   const remainingBudget = totalBudget - totalSpent;
   const utilizationPercent = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
@@ -79,7 +73,6 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
   if (utilizationPercent > 75) progressColor = 'bg-amber-500';
   if (utilizationPercent > 90) progressColor = 'bg-red-500';
 
-  // --- 3. BURN RATE FORECASTING MATH ---
   let forecastMessage = "Calculating projection...";
   let forecastColor = "text-slate-500";
 
@@ -107,7 +100,6 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
     forecastMessage = "No spending data to forecast.";
   }
 
-  // --- TREND MATH (Last 6 Months) ---
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
   
@@ -133,7 +125,6 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
     total: monthlyDataMap[key]
   }));
 
-  // --- TOP MERCHANTS MATH ---
   const merchantMap: Record<string, number> = {};
   approvedExpenses.forEach((exp) => {
     const merchant = exp.description || 'Unknown Vendor';
@@ -145,14 +136,12 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
     .sort((a, b) => b.total - a.total)
     .slice(0, 5); 
 
-  // Safely map members
   const membersData = (team.team_members as unknown as TeamMember[]) || [];
   const members = membersData.map((m) => m.users).filter(Boolean);
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
       
-      {/* 🟢 PERFECTED HEADER 🟢 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
           <Link href="/dashboard/teams" className="text-xs font-bold text-blue-600 hover:text-blue-800 mb-1.5 inline-flex items-center gap-1 transition uppercase tracking-wider">
@@ -177,7 +166,6 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
 
       <PendingApprovalsList expenses={pendingExpenses} />
 
-      {/* METRICS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
@@ -224,7 +212,6 @@ export default async function TeamDashboard({ params }: { params: Promise<{ id: 
 
       </div>
 
-      {/* Passing proper typed arrays */}
       <TeamAnalytics expenses={approvedExpenses} members={members as any} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

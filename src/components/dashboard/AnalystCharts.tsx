@@ -16,7 +16,6 @@ export default function AnalystCharts({
   categoryData: CategoryData[];
 }) {
   
-  // Custom Tooltip for the Area Chart (Burn Rate)
   const CustomAreaTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -31,7 +30,6 @@ export default function AnalystCharts({
     return null;
   };
 
-  // Custom Tooltip for the Donut Chart
   const CustomPieTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -52,8 +50,7 @@ export default function AnalystCharts({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      {/* CHART 1: MONTHLY BURN RATE (Spans 2 columns) */}
+
       <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col h-[400px]">
         <div className="mb-4 shrink-0">
           <h3 className="text-sm font-bold text-slate-800">Company Burn Rate (YTD)</h3>
@@ -97,7 +94,6 @@ export default function AnalystCharts({
         </div>
       </div>
 
-      {/* CHART 2: CATEGORY DONUT (Spans 1 column) */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col h-[400px]">
         <div className="mb-2 shrink-0">
           <h3 className="text-sm font-bold text-slate-800">Spend by Category</h3>
@@ -134,7 +130,6 @@ export default function AnalystCharts({
             </ResponsiveContainer>
           )}
           
-          {/* Inner Donut Text */}
           {categoryData.length > 0 && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-[-20px]">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Top Category</span>

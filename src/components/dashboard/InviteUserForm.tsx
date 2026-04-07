@@ -15,7 +15,6 @@ const InviteUserForm = ({ startupId, teams }: { startupId: string, teams: Team[]
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  // Automatically clear messages after 3 seconds
   useEffect(() => {
     if (errorMsg || successMsg) {
       const timer = setTimeout(() => {
@@ -65,7 +64,6 @@ const InviteUserForm = ({ startupId, teams }: { startupId: string, teams: Team[]
   return (
     <form onSubmit={handleInviteUser} className="space-y-3">
       
-      {/* Fixed height container for messages so the form doesn't jump around */}
       <div className="flex justify-center w-full min-h-[35px]">
         {errorMsg && (
           <div className="p-2 bg-red-50 text-red-700 w-full text-center text-sm rounded-lg border border-red-100">
@@ -79,7 +77,6 @@ const InviteUserForm = ({ startupId, teams }: { startupId: string, teams: Team[]
         )}
       </div>
 
-      {/* Changed to a vertical stack (space-y-4) to fit the narrow left column */}
       <div className="space-y-3">
         <div className="w-full">
           <label className="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>

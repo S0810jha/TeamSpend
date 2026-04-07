@@ -1,4 +1,3 @@
-// src/components/dashboard/ClientSidebar.tsx
 "use client";
 
 import { useState } from 'react';
@@ -11,12 +10,10 @@ export default function ClientSidebar({ profile }: { profile: any }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  // Helper function to check if a link is active
   const isActive = (path: string) => pathname === path;
 
   return (
     <>
-      {/* MOBILE HEADER (Visible only on sm screens and below) */}
       <div className="md:hidden flex items-center justify-between bg-slate-900 p-4 border-b border-slate-800 text-white shrink-0 z-20">
         <div className="flex items-center gap-3">
           <Logo isDarkBg={true} />
@@ -33,7 +30,6 @@ export default function ClientSidebar({ profile }: { profile: any }) {
         </button>
       </div>
 
-      {/* MOBILE OVERLAY (Darkens the background when menu is open) */}
       {isMobileMenuOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-slate-900/60 z-30 backdrop-blur-sm transition-opacity"
@@ -41,7 +37,6 @@ export default function ClientSidebar({ profile }: { profile: any }) {
         />
       )}
 
-      {/* THE SIDEBAR (Fixed on desktop, sliding drawer on mobile) */}
       <aside 
         className={`
           fixed md:static inset-y-0 left-0 z-40
@@ -50,7 +45,7 @@ export default function ClientSidebar({ profile }: { profile: any }) {
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >
-        {/* Startup Info */}
+
         <div className="p-6 pb-4">
           <h2 className="text-xl font-bold tracking-tight text-white truncate">
             {profile.startups?.name || 'Workspace'}
@@ -70,7 +65,7 @@ export default function ClientSidebar({ profile }: { profile: any }) {
           </div>
         </div>
 
-        {/* Navigation Links */}
+
         <nav className="flex-1 space-y-1.5 px-4 py-4 overflow-y-auto">
           
           <Link 
@@ -136,7 +131,6 @@ export default function ClientSidebar({ profile }: { profile: any }) {
           )}
         </nav>
 
-        {/* Logo & Logout Footer */}
         <div className="p-5 mt-auto border-t border-slate-800 space-y-4">
           <div className="flex justify-center opacity-80 hover:opacity-100 transition-opacity">
             <Logo isDarkBg={true} />

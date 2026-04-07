@@ -21,13 +21,9 @@ export default function EditUserTeamModal({
 
   const handleSave = async () => {
     setIsSaving(true);
-    // In a real app, you would POST to an API route here to update the team_members table
-    // await axios.post('/api/users/assign-team', { userId, teamId: selectedTeam });
-    
-    setTimeout(() => {
+        setTimeout(() => {
       setIsSaving(false);
       setIsOpen(false);
-      // router.refresh(); // Refresh to see changes
     }, 800);
   };
 

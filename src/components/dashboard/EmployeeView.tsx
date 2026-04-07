@@ -49,7 +49,7 @@ export default async function EmployeeView({ profile }: { profile: any }) {
   let budgetObj = null;
   let teammates: any[] = []; 
   let teamApprovedSpend = 0;
-  let teammateSpends: Record<string, number> = {}; // NEW: Map to track spend per user
+  let teammateSpends: Record<string, number> = {}; 
 
   if (teamMember?.team_id) {
     const { data: teamData } = await supabase.from('teams').select('id, name').eq('id', teamMember.team_id).maybeSingle();
@@ -60,7 +60,6 @@ export default async function EmployeeView({ profile }: { profile: any }) {
     if (budgetData) {
       budgetObj = budgetData;
 
-      // UPDATED: Added user_id to the select query to map expenses to teammates
       const { data: teamExp } = await supabase
         .from('expenses')
         .select('amount, user_id') 
@@ -79,7 +78,6 @@ export default async function EmployeeView({ profile }: { profile: any }) {
       }
     }
 
-    // FETCH THE TEAM ROSTER
     const { data: rosterData } = await supabase
       .from('team_members')
       .select('users(id, full_name, role)')
@@ -92,14 +90,12 @@ export default async function EmployeeView({ profile }: { profile: any }) {
     }
   }
 
-  // 2. Fetch Personal Expenses for Calculations
   const { data: myExpenses } = await supabase
     .from('expenses')
     .select('id, amount, description, category, status, created_at')
     .eq('user_id', profile.id)
     .order('created_at', { ascending: false });
 
-  // 3. Determine Budget Status
   let budgetStatus: 'ACTIVE' | 'UPCOMING' | 'EXPIRED' | 'NO_BUDGET' | 'UNASSIGNED' = 'UNASSIGNED';
   if (myTeam) {
     if (!budgetObj?.start_date || !budgetObj?.end_date) budgetStatus = 'NO_BUDGET';
@@ -114,20 +110,17 @@ export default async function EmployeeView({ profile }: { profile: any }) {
     }
   }
 
-  // Personal Metrics
   const expensesList = myExpenses || [];
   const pendingAmount = expensesList.filter(e => e.status === 'PENDING').reduce((sum, e) => sum + Number(e.amount), 0);
   const approvedAmount = expensesList.filter(e => e.status === 'APPROVED').reduce((sum, e) => sum + Number(e.amount), 0);
   const rejectedAmount = expensesList.filter(e => e.status === 'REJECTED').reduce((sum, e) => sum + Number(e.amount), 0);
 
-  // Calculate remaining team budget
   const remainingBudget = budgetObj ? Number(budgetObj.total_amount) - teamApprovedSpend : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900 selection:bg-blue-100">
       <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* PREMIUM HEADER */}
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-5 pb-5 border-b border-slate-200/80">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome, {profile.full_name.split(' ')[0]}</h1>
@@ -141,11 +134,9 @@ export default async function EmployeeView({ profile }: { profile: any }) {
             </div>
           </div>
           
-          {/* COMBINED CYCLE & BUDGET WIDGET */}
           {budgetObj && (
             <div className="flex items-center bg-white border border-slate-200/80 rounded-xl p-1.5 shadow-sm w-full xl:w-auto overflow-x-auto">
               
-              {/* Cycle */}
               <div className="px-4 py-2 border-r border-slate-100 whitespace-nowrap">
                 <div className="flex items-center gap-1.5 mb-1">
                   <div className={`w-1.5 h-1.5 rounded-full ${budgetStatus === 'ACTIVE' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
@@ -156,13 +147,11 @@ export default async function EmployeeView({ profile }: { profile: any }) {
                 </p>
               </div>
 
-              {/* Total Budget */}
               <div className="px-4 py-2 border-r border-slate-100 text-right hidden sm:block whitespace-nowrap">
                 <p className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Total Budget</p>
                 <p className="text-sm font-bold text-slate-500 tracking-tight">${Number(budgetObj.total_amount).toLocaleString()}</p>
               </div>
 
-              {/* Remaining */}
               <div className="px-4 py-2 text-right whitespace-nowrap">
                 <p className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Remaining</p>
                 <p className={`text-lg font-black tracking-tight ${remainingBudget < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
@@ -174,27 +163,22 @@ export default async function EmployeeView({ profile }: { profile: any }) {
           )}
         </div>
 
-        {/* DENSE STATS GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard label="Approved Spend" amount={approvedAmount} type="emerald" />
           <StatCard label="Pending Approval" amount={pendingAmount} type="amber" />
           <StatCard label="Rejected" amount={rejectedAmount} type="rose" />
         </div>
 
-        {/* MAIN LAYOUT (Form + 2 Blocks) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* LEFT COLUMN: SUBMISSION FORM */}
           <div className="lg:col-span-5 flex flex-col gap-5">
             <div className="bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden">
                <SubmitExpenseForm budgetStatus={budgetStatus} />
             </div>
           </div>
 
-          {/* RIGHT COLUMN: SIDE-BY-SIDE BLOCKS */}
           <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5">
             
-            {/* BLOCK 1: DYNAMIC SPEND BREAKDOWN */}
             <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm flex flex-col h-[443px]">
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 shrink-0">
                 <h3 className="text-sm font-semibold text-slate-800">Spend Breakdown</h3>
@@ -237,7 +221,6 @@ export default async function EmployeeView({ profile }: { profile: any }) {
               </div>
             </div>
 
-            {/* BLOCK 2: TEAM ROSTER */}
             {myTeam && (
               <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm flex flex-col h-[443px]">
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 shrink-0">
@@ -248,7 +231,6 @@ export default async function EmployeeView({ profile }: { profile: any }) {
                 <div className="space-y-2 overflow-y-auto flex-1 min-h-0 pr-2">
                   {teammates.length > 0 ? (
                     teammates.map(mate => {
-                      // NEW: Grab the total calculated spend for this specific teammate
                       const mateSpend = teammateSpends[mate.id] || 0;
                       
                       return (
@@ -262,7 +244,6 @@ export default async function EmployeeView({ profile }: { profile: any }) {
                             <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5 truncate">{mate.role}</p>
                           </div>
                           
-                          {/* NEW: Render the specific teammate's approved spend */}
                           <div className="text-right shrink-0">
                             <p className="text-xs font-bold text-slate-700">
                               ${mateSpend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -286,8 +267,6 @@ export default async function EmployeeView({ profile }: { profile: any }) {
     </div>
   );
 }
-
-// --- HELPER COMPONENTS ---
 
 function StatCard({ label, amount, type }: { label: string, amount: number, type: 'emerald' | 'amber' | 'rose' }) {
   const colorMap = {

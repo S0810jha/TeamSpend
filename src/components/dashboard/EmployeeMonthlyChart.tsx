@@ -2,7 +2,6 @@
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-// A premium palette of distinct colors for different employees
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#64748b', '#14b8a6'];
 
 export default function EmployeeMonthlyChart({ data, employeeNames }: { data: any[], employeeNames: string[] }) {
@@ -19,11 +18,8 @@ export default function EmployeeMonthlyChart({ data, employeeNames }: { data: an
     );
   }
 
-  // Premium Dark-Mode Tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      // Clean up the tooltip: Only show employees who actually spent money this month, 
-      // and sort them from highest spender to lowest spender.
       const activeSpenders = payload
         .filter((p: any) => p.value > 0)
         .sort((a: any, b: any) => b.value - a.value);
@@ -61,9 +57,9 @@ export default function EmployeeMonthlyChart({ data, employeeNames }: { data: an
           dataKey="month" 
           axisLine={false} 
           tickLine={false} 
-          tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} // slightly smaller text
+          tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} 
           dy={10} 
-          interval={0} // <--- THIS IS THE FIX: Forces Recharts to show every single month
+          interval={0} 
         />
         <YAxis 
           tickFormatter={(val) => `$${val >= 1000 ? (val / 1000) + 'k' : val}`} 
@@ -73,7 +69,6 @@ export default function EmployeeMonthlyChart({ data, employeeNames }: { data: an
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
         
-        {/* Dynamically render a stacked bar for every employee on the team */}
         {employeeNames.map((name, index) => (
           <Bar 
             key={name} 
@@ -81,7 +76,6 @@ export default function EmployeeMonthlyChart({ data, employeeNames }: { data: an
             stackId="a" 
             fill={COLORS[index % COLORS.length]} 
             maxBarSize={40}
-            // Add slight rounded corners to the top of the stack
             radius={index === employeeNames.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
           />
         ))}

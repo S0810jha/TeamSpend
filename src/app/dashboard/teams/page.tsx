@@ -26,13 +26,11 @@ const TeamsPage = async () => {
     .eq('startup_id', profile.startup_id)
     .order('created_at', { ascending: false });
 
-  // 1. Get today's exact date/time to use as our comparison benchmark
   const today = new Date();
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
-      
-      {/* COMPACT HEADER */}
+
       <div className="pb-4 border-b border-slate-200">
         <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">Manage Teams</h1>
         <p className="text-xs text-slate-500 mt-0.5">Create departments and allocate their initial budgets.</p>
@@ -40,9 +38,7 @@ const TeamsPage = async () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* LEFT COLUMN: The Creation Form */}
         <div className="lg:col-span-1">
-          {/* Form stays sticky on scroll */}
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 sticky top-6">
             <h2 className="text-sm font-bold text-slate-900 tracking-tight mb-4">Create New Team</h2>
             <div className="w-full">
@@ -51,7 +47,6 @@ const TeamsPage = async () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: The Teams List */}
         <div className="lg:col-span-2 space-y-4">
           
           <div className="flex justify-between items-end">
@@ -63,7 +58,6 @@ const TeamsPage = async () => {
 
           <div>
             {!teams || teams.length === 0 ? (
-              // Empty State
               <div className="bg-white p-10 rounded-xl shadow-sm border border-slate-200 text-center flex flex-col items-center justify-center min-h-[250px]">
                 <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-3 border border-slate-100">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,17 +70,14 @@ const TeamsPage = async () => {
                 </p>
               </div>
             ) : (
-              // Data Grid
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {teams.map((team) => {
                   const currentBudget = Array.isArray(team.budgets) ? team.budgets[0] : team.budgets;
                   
-                  // 2. THE BRAINS: Calculate if the team is active based strictly on dates
                   let isActive = false;
                   if (currentBudget?.start_date && currentBudget?.end_date) {
                     const startDate = new Date(currentBudget.start_date);
                     const endDate = new Date(currentBudget.end_date);
-                    // Ensure the end date includes the very last minute of that day
                     endDate.setHours(23, 59, 59, 999); 
                     
                     if (today >= startDate && today <= endDate) {
@@ -97,8 +88,7 @@ const TeamsPage = async () => {
                   return (
                     <Link href={`/dashboard/teams/${team.id}`} key={team.id} className="block group">
                       <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 group-hover:border-blue-400 group-hover:shadow-md transition h-full flex flex-col justify-between relative overflow-hidden">
-                        
-                        {/* Subtle visual indicator if inactive */}
+                   
                         {!isActive && (
                            <div className="absolute inset-0 bg-slate-50/50 pointer-events-none z-0"></div>
                         )}
@@ -108,8 +98,7 @@ const TeamsPage = async () => {
                             <h3 className={`text-base font-extrabold transition tracking-tight pr-2 truncate ${isActive ? 'text-slate-900 group-hover:text-blue-600' : 'text-slate-500 group-hover:text-slate-700'}`}>
                               {team.name}
                             </h3>
-                            
-                            {/* 3. DYNAMIC BADGE RENDER */}
+                       
                             {isActive ? (
                               <span className="bg-emerald-50 text-emerald-700 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-emerald-100 shrink-0">
                                 Active

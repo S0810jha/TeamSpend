@@ -34,7 +34,6 @@ export default function SubmitExpenseForm({ budgetStatus }: SubmitExpenseProps) 
       form.reset();
       router.refresh();
       
-      // Auto-clear success message after 4 seconds
       setTimeout(() => setSuccessMsg(""), 4000);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -47,7 +46,6 @@ export default function SubmitExpenseForm({ budgetStatus }: SubmitExpenseProps) 
     }
   };
 
-  // --- PREMIUM LOCKED STATES ---
   if (budgetStatus !== 'ACTIVE') {
     const lockConfig = {
       UNASSIGNED: { title: "Access Restricted", desc: "You must be assigned to a department to log expenses. Contact your Admin.", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /> },
@@ -69,17 +67,14 @@ export default function SubmitExpenseForm({ budgetStatus }: SubmitExpenseProps) 
     );
   }
 
-  // --- THE ACTIVE PREMIUM FORM ---
   return (
     <form onSubmit={handleSubmit} className="flex flex-col h-full p-6 sm:p-8 space-y-6">
-      
-      {/* HEADER */}
+
       <div className="shrink-0">
         <h3 className="text-lg font-bold text-slate-900 tracking-tight">Log Expense</h3>
         <p className="text-[11px] font-medium text-slate-500 mt-1">Submit a receipt for manager approval.</p>
       </div>
 
-      {/* ALERTS */}
       {errorMsg && (
         <div className="p-3 bg-rose-50 border border-rose-100 rounded-lg flex items-start gap-2 text-rose-700 animate-in fade-in slide-in-from-top-1">
           <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -93,10 +88,8 @@ export default function SubmitExpenseForm({ budgetStatus }: SubmitExpenseProps) 
         </div>
       )}
 
-      {/* INPUTS CONTAINER */}
       <div className="space-y-5 flex-1 min-h-0 overflow-y-auto pr-1">
-        
-        {/* AMOUNT */}
+ 
         <div>
           <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 ml-0.5">Amount</label>
           <div className="relative">
@@ -115,7 +108,6 @@ export default function SubmitExpenseForm({ budgetStatus }: SubmitExpenseProps) 
           </div>
         </div>
 
-        {/* DESCRIPTION */}
         <div>
           <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 ml-0.5">Description</label>
           <input
@@ -127,7 +119,6 @@ export default function SubmitExpenseForm({ budgetStatus }: SubmitExpenseProps) 
           />
         </div>
 
-        {/* CATEGORY (Matches DB exactly) */}
         <div>
           <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 ml-0.5">Category</label>
           <div className="relative">
@@ -146,7 +137,7 @@ export default function SubmitExpenseForm({ budgetStatus }: SubmitExpenseProps) 
               <option value="Other">Other Expenses</option>
               <option value="Uncategorized">Uncategorized</option>
             </select>
-            {/* Custom dropdown arrow for a cleaner look */}
+            
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>
             </div>
@@ -155,7 +146,6 @@ export default function SubmitExpenseForm({ budgetStatus }: SubmitExpenseProps) 
 
       </div>
 
-      {/* SUBMIT BUTTON */}
       <div className="pt-2 shrink-0 border-t border-slate-100">
         <button 
           type="submit" 

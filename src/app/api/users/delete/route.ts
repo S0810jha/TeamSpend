@@ -37,7 +37,6 @@ export const POST = async (request: Request) => {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
-        // FIX: Fetch the target user's role along with their startup_id
         const { data: targetUser } = await adminAuthClient
             .from('users')
             .select('startup_id, role')
@@ -48,7 +47,6 @@ export const POST = async (request: Request) => {
             return NextResponse.json({ error: 'User not found in your workspace.' }, { status: 403 });
         }
 
-        // FIX: Absolute server-side block preventing Admin deletion
         if (targetUser?.role === 'ADMIN') {
             return NextResponse.json({ error: 'You cannot delete an Admin account.' }, { status: 403 });
         }

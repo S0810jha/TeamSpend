@@ -13,7 +13,6 @@ export default function DeleteExpenseButton({ expenseId }: { expenseId: string }
 
     setLoading(true);
     try {
-      // You'll need to create this API route if it doesn't exist
       await axios.post("/api/expenses/delete", { expenseId });
       router.refresh();
     } catch (error) {

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import DeleteExpenseButton from '@/components/dashboard/DeleteExpenseButton';
 import { JSX } from 'react';
 
-// --- CONFIGURATION FOR DYNAMIC CATEGORY STYLING ---
 const CATEGORY_MAP: Record<string, { icon: JSX.Element, color: string, bg: string }> = {
   Software: { bg: 'bg-blue-50', color: 'text-blue-600', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg> },
   Marketing: { bg: 'bg-purple-50', color: 'text-purple-600', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg> },
@@ -30,7 +29,6 @@ export default async function MyExpensesPage({
   const currentStatus = resolvedParams?.status || 'ALL';
   const currentCategory = resolvedParams?.category || 'ALL';
 
-  // 1. Fetch only this user's expenses
   const { data: expenses } = await supabase
     .from('expenses')
     .select('*')
@@ -39,13 +37,11 @@ export default async function MyExpensesPage({
 
   const expensesList = expenses || [];
 
-  // 2. Calculations for metrics
   const totalApprovedSpend = expensesList.filter(e => e.status === 'APPROVED').reduce((acc, curr) => acc + Number(curr.amount), 0);
   const pendingCount = expensesList.filter(e => e.status === 'PENDING').length;
   const approvedCount = expensesList.filter(e => e.status === 'APPROVED').length;
   const rejectedCount = expensesList.filter(e => e.status === 'REJECTED').length;
 
-  // 3. Apply Filters
   const filteredExpenses = expensesList.filter(exp => {
     const matchStatus = currentStatus === 'ALL' || exp.status === currentStatus;
     const matchCategory = currentCategory === 'ALL' || exp.category === currentCategory;
@@ -56,7 +52,6 @@ export default async function MyExpensesPage({
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900 selection:bg-blue-100">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* HEADER SECTION */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-4 border-b border-slate-200">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Transaction Ledger</h1>
@@ -64,7 +59,6 @@ export default async function MyExpensesPage({
           </div>
         </div>
 
-        {/* DENSE STATS ROW */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Approved Spend</p>
@@ -75,10 +69,8 @@ export default async function MyExpensesPage({
           <StatCard label="Rejected Requests" count={rejectedCount} type="rose" />
         </div>
 
-        {/* FULL WIDTH DENSE TABLE WITH SCROLL LOCK */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden h-[600px]">
           
-          {/* FILTER CONTROLS BAR */}
           <div className="p-4 border-b border-slate-200 bg-white flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center shrink-0">
             <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200/60">
               {FILTER_STATUSES.map(status => (
@@ -113,7 +105,6 @@ export default async function MyExpensesPage({
             </div>
           </div>
           
-          {/* TABLE HEADERS */}
           <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
             <div className="col-span-5 md:col-span-4">Description & Date</div>
             <div className="col-span-4 md:col-span-3">Category</div>
@@ -122,7 +113,6 @@ export default async function MyExpensesPage({
             <div className="hidden md:block md:col-span-1 text-center">Action</div>
           </div>
 
-          {/* TABLE BODY (SCROLLABLE AREA) */}
           <div className="divide-y divide-slate-100 overflow-y-auto flex-1 min-h-0">
             {filteredExpenses.length === 0 ? (
               <EmptyState />
@@ -132,7 +122,6 @@ export default async function MyExpensesPage({
                 return (
                   <div key={exp.id} className="grid grid-cols-12 gap-4 px-6 py-3.5 items-center hover:bg-slate-50/80 transition-colors group">
                     
-                    {/* Col 1: Description & Date */}
                     <div className="col-span-5 md:col-span-4 min-w-0">
                       <p className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
                         {exp.description || '—'}
@@ -142,7 +131,6 @@ export default async function MyExpensesPage({
                       </p>
                     </div>
 
-                    {/* Col 2: Category Pill */}
                     <div className="col-span-4 md:col-span-3 flex items-center">
                       <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border ${style.bg} ${style.color} border-${style.color.split('-')[1]}-100`}>
                         {style.icon}
@@ -150,12 +138,10 @@ export default async function MyExpensesPage({
                       </div>
                     </div>
 
-                    {/* Col 3: Status Badge */}
                     <div className="hidden md:flex col-span-2 items-center">
                       <StatusBadge status={exp.status} />
                     </div>
 
-                    {/* Col 4: Amount & Mobile Actions */}
                     <div className="col-span-3 md:col-span-2 flex flex-col items-center justify-center">
                       <p className={`text-sm font-black tracking-tight ${exp.status === 'REJECTED' ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
                         ${Number(exp.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -166,7 +152,6 @@ export default async function MyExpensesPage({
                       </div>
                     </div>
 
-                    {/* Col 5: Desktop Delete Action */}
                     <div className="hidden md:flex md:col-span-1 justify-end">
                       {exp.status === 'PENDING' && (
                         <DeleteExpenseButton expenseId={exp.id} />
@@ -184,8 +169,6 @@ export default async function MyExpensesPage({
     </div>
   );
 }
-
-// --- HELPER COMPONENTS ---
 
 function StatCard({ label, count, type }: { label: string, count: number, type: 'emerald' | 'amber' | 'rose' }) {
   const colors = {

@@ -12,7 +12,7 @@ export default function PendingApprovalsList({ expenses }: { expenses: any[] }) 
     setLoadingId(expenseId);
     try {
       await axios.post("/api/expenses/update-status", { expenseId, newStatus });
-      router.refresh(); // Instantly update the dashboard math
+      router.refresh(); 
     } catch (error) {
       alert("Failed to update status.");
     } finally {
@@ -20,7 +20,7 @@ export default function PendingApprovalsList({ expenses }: { expenses: any[] }) 
     }
   };
 
-  if (expenses.length === 0) return null; // Don't show anything if there's nothing to approve!
+  if (expenses.length === 0) return null; 
 
   return (
     <div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 shadow-sm mb-6">

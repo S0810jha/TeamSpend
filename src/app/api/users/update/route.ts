@@ -29,7 +29,6 @@ export const POST = async (request: Request) => {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
-        // FIX 1: Fetch the target user's role along with their startup_id
         const { data: targetUser } = await adminAuthClient
             .from('users')
             .select('startup_id, role')
@@ -40,26 +39,22 @@ export const POST = async (request: Request) => {
             return NextResponse.json({ error: 'User not found in your workspace.' }, { status: 403 });
         }
 
-        // FIX 2: Absolute backend security block
         if (targetUser?.role === 'ADMIN') {
             if (role !== 'ADMIN') {
                 return NextResponse.json({ error: 'Security Exception: Cannot downgrade an Admin account.' }, { status: 403 });
             }
-            // If they are an Admin, we ONLY allow them to update the name.
+
             const { error: profileError } = await adminAuthClient
                 .from('users')
-                .update({ full_name: fullName }) // Notice we explicitly omit updating 'role'
+                .update({ full_name: fullName }) 
                 .eq('id', userId);
 
             if (profileError) throw profileError;
             
-            // We return early here so it completely skips the team assignment logic below!
             return NextResponse.json({ success: true }, { status: 200 });
         }
 
-        // --- NORMAL EMPLOYEE/ANALYST UPDATE LOGIC ---
         
-        // 3. Update the User's Profile (Name and Role)
         const { error: profileError } = await adminAuthClient
             .from('users')
             .update({ full_name: fullName, role: role })
@@ -67,7 +62,6 @@ export const POST = async (request: Request) => {
 
         if (profileError) throw profileError;
 
-        // 4. Update the Team Assignment
         await adminAuthClient
             .from('team_members')
             .delete()

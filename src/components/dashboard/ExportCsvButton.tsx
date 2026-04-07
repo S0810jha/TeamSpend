@@ -14,28 +14,24 @@ export default function ExportCsvButton({ data, filename = "vaultpay_export" }: 
         return;
       }
 
-      // 1. Define the CSV Headers
       const headers = ["Transaction ID", "Date", "Employee", "Department", "Category", "Description", "Amount", "Status"];
 
-      // 2. Map the data to match the headers
       const csvRows = data.map(exp => [
         exp.id,
         new Date(exp.created_at).toLocaleDateString('en-GB'),
-        `"${exp.users?.full_name || 'Unknown'}"`, // Quotes prevent commas in names from breaking the CSV
+        `"${exp.users?.full_name || 'Unknown'}"`, 
         `"${exp.teams?.name || 'Unassigned'}"`,
         exp.category,
-        `"${(exp.description || '').replace(/"/g, '""')}"`, // Escape quotes in descriptions
+        `"${(exp.description || '').replace(/"/g, '""')}"`, 
         exp.amount,
         exp.status
       ]);
 
-      // 3. Combine headers and rows
       const csvContent = [
         headers.join(","),
         ...csvRows.map(row => row.join(","))
       ].join("\n");
 
-      // 4. Create a Blob and trigger download
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -52,7 +48,7 @@ export default function ExportCsvButton({ data, filename = "vaultpay_export" }: 
       console.error("Failed to export CSV", error);
       alert("An error occurred while generating the CSV.");
     } finally {
-      setTimeout(() => setIsExporting(false), 500); // Slight delay for UX
+      setTimeout(() => setIsExporting(false), 500); 
     }
   };
 

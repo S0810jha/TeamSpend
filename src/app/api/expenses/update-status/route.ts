@@ -27,10 +27,6 @@ export const POST = async (request: Request) => {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
-        // BEST PRACTICE: We update the status to 'REJECTED' so the employee knows it was denied.
-        // If you absolutely MUST delete the record instead, you would change the code below to:
-        // const { error } = await adminAuthClient.from('expenses').delete().eq('id', expenseId);
-
         const { error: updateError } = await adminAuthClient
             .from('expenses')
             .update({ status: newStatus })

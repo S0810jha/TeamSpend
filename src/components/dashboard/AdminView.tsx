@@ -3,7 +3,6 @@ import CompanySpendChart from '@/components/dashboard/CompanySpendChart';
 import CompanyTrendChart from '@/components/dashboard/CompanyTrendChart';
 import Link from 'next/link';
 
-// --- 🟢 ADDED TYPES TO FIX VERCEL ERROR 🟢 ---
 interface Budget {
   total_amount: number;
 }
@@ -33,7 +32,6 @@ export default async function AdminView({ profile }: { profile: any }) {
     .select('id, name, budgets(total_amount)')
     .eq('startup_id', profile.startup_id);
 
-  // Cast to our interface
   const teams = (teamsData as unknown as Team[]) || [];
 
   const { count: employeeCount } = await supabase
@@ -50,16 +48,13 @@ export default async function AdminView({ profile }: { profile: any }) {
     .eq('startup_id', profile.startup_id)
     .order('created_at', { ascending: false });
 
-  // Cast to our interface
   const allExpenses = (expensesData as unknown as Expense[]) || [];
   const approvedExpenses = allExpenses.filter(e => e.status === 'APPROVED');
   const pendingExpenses = allExpenses.filter(e => e.status === 'PENDING');
   const recentExpenses = allExpenses.slice(0, 8);
 
-  // --- CORE CALCULATIONS ---
   const totalTeams = teams?.length || 0;
   const totalBudget = teams?.reduce((acc, team) => {
-    // FIXED: Strict checking for total_amount
     const teamBudget = Array.isArray(team.budgets) ? team.budgets[0]?.total_amount : (team.budgets as Budget)?.total_amount;
     return acc + Number(teamBudget || 0);
   }, 0) || 0;
@@ -67,7 +62,6 @@ export default async function AdminView({ profile }: { profile: any }) {
   const totalSpent = approvedExpenses.reduce((acc, exp) => acc + Number(exp.amount), 0);
   const remainingBudget = totalBudget - totalSpent;
 
-  // --- PIE CHART MATH ---
   const spendByTeamMap: Record<string, number> = {};
   approvedExpenses.forEach(exp => {
     const teamName = exp.teams?.name || 'Unassigned';
@@ -77,7 +71,6 @@ export default async function AdminView({ profile }: { profile: any }) {
     .map(key => ({ name: key, value: spendByTeamMap[key] }))
     .sort((a, b) => b.value - a.value);
 
-  // --- 6-MONTH TREND MATH ---
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
   
@@ -104,7 +97,6 @@ export default async function AdminView({ profile }: { profile: any }) {
     total: monthlyDataMap[key]
   }));
 
-  // --- TOP SPENDERS LEADERBOARD MATH ---
   const employeeSpendMap: Record<string, number> = {};
   approvedExpenses.forEach((exp) => {
     const name = exp.users?.full_name || 'Unknown Employee';
@@ -159,7 +151,6 @@ export default async function AdminView({ profile }: { profile: any }) {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         
-        {/* LEFT 2/3: Transactions & Approvals */}
         <div className="xl:col-span-2 space-y-6 flex flex-col">
           
           {pendingExpenses.length > 0 && (
@@ -243,7 +234,6 @@ export default async function AdminView({ profile }: { profile: any }) {
 
         </div>
 
-        {/* RIGHT 1/3: ANALYTICS STACK */}
         <div className="xl:col-span-1 space-y-6 flex flex-col">
           
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col">

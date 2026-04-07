@@ -6,7 +6,6 @@ import EditUserModal from '@/components/dashboard/EditUserModal';
 import InviteUserForm from '@/components/dashboard/InviteUserForm';
 import UserFilters from '@/components/dashboard/UserFilters';
 
-// --- 🟢 DEFINE TYPES TO SATISFY VERCEL 🟢 ---
 interface Team {
   id: string;
   name: string;
@@ -14,7 +13,7 @@ interface Team {
 
 interface TeamMemberRelation {
   team_id: string;
-  teams: Team | Team[] | null; // Supabase can return an object or array depending on the join
+  teams: Team | Team[] | null; 
 }
 
 interface User {
@@ -42,7 +41,6 @@ const UsersPage = async ({ searchParams }: { searchParams: Promise<{ page?: stri
   const from = (currentPage - 1) * itemsPerPage;
   const to = from + itemsPerPage - 1;
 
-  // --- DYNAMIC SUPABASE QUERY FOR USERS ---
   let query = supabase
     .from('users')
     .select(`
@@ -64,10 +62,8 @@ const UsersPage = async ({ searchParams }: { searchParams: Promise<{ page?: stri
     .order('full_name', { ascending: true })
     .range(from, to);
 
-  // Cast data to our User interface
   const users = (data as unknown as User[]) || [];
 
-  // --- DYNAMIC SUPABASE QUERY FOR TEAMS & BUDGETS ---
   const { data: allTeams } = await supabase
     .from('teams')
     .select('id, name, budgets(start_date, end_date)')
@@ -146,7 +142,6 @@ const UsersPage = async ({ searchParams }: { searchParams: Promise<{ page?: stri
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {users.map((user) => {
-                    // 🟢 FIX: Safe extraction with Array check
                     const firstMember = user.team_members?.[0];
                     const teamsField = firstMember?.teams;
                     const teamData = Array.isArray(teamsField) ? teamsField[0] : teamsField;

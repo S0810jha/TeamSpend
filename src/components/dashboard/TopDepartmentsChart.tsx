@@ -12,11 +12,8 @@ export default function TopDepartmentsChart({ data }: { data: ChartData[] }) {
     return <div className="text-center text-sm text-slate-400 mt-10">No department data yet.</div>;
   }
 
-  // Recharts vertical bar chart renders from bottom to top. 
-  // We reverse the data so the #1 highest spending department sits at the very top.
   const chartData = [...data].reverse();
 
-  // Custom Tooltip to match our premium dark-mode styling
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -48,7 +45,6 @@ export default function TopDepartmentsChart({ data }: { data: ChartData[] }) {
           {chartData.map((entry, index) => (
             <Cell 
               key={`cell-${index}`} 
-              // Highlight the highest spender (the last item in our reversed array) in Indigo
               fill={index === chartData.length - 1 ? '#6366f1' : '#94a3b8'} 
             />
           ))}

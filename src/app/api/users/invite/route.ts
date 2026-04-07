@@ -7,7 +7,6 @@ export const POST = async (request: Request) => {
         const body = await request.json();
         const { startupId, fullName, email, password, role, teamId } = body;
 
-        // 1. Verify the person making the request is actually an Admin
         const supabase = await createClient();
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
@@ -25,24 +24,22 @@ export const POST = async (request: Request) => {
             return NextResponse.json({ error: 'Not authorized to invite users.' }, { status: 403 });
         }
 
-        // 2. Initialize the SUPERUSER Admin Client (Requires SUPABASE_SERVICE_ROLE_KEY in .env.local)
         const adminAuthClient = createAdminClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!,
             {
                 auth: {
                     autoRefreshToken: false,
-                    persistSession: false // 👈 This stops the Admin from being forcefully logged out!
+                    persistSession: false 
                 }
             }
         );
 
-        // 3. Create the new user in Supabase Authentication
         const { data: newAuthUser, error: createError } = await adminAuthClient.auth.admin.createUser({
             email: email,
             password: password,
-            email_confirm: true, // Auto-confirm so they can log in immediately
-            user_metadata: { full_name: fullName } // Notice we are NOT passing startup_name here!
+            email_confirm: true, 
+            user_metadata: { full_name: fullName } 
         });
 
         if (createError) {
@@ -52,7 +49,6 @@ export const POST = async (request: Request) => {
 
         const newUserId = newAuthUser.user.id;
 
-        // 4. Manually add them to your public.users table according to your schema
         const { error: profileError } = await adminAuthClient
             .from('users')
             .insert({
@@ -65,12 +61,10 @@ export const POST = async (request: Request) => {
 
         if (profileError) {
             console.error("SUPABASE PROFILE ERROR:", profileError);
-            // Rollback auth user if public table fails
             await adminAuthClient.auth.admin.deleteUser(newUserId);
             return NextResponse.json({ error: 'Failed to create user profile.' }, { status: 400 });
         }
 
-        // 5. Link the employee to their Team in public.team_members
         if (teamId) {
             const { error: teamError } = await adminAuthClient
                 .from('team_members')

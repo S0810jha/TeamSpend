@@ -7,11 +7,11 @@ export const POST = async (request: Request) => {
         const body = await request.json();
         const { teamId, budgetId, totalAmount, startDate, endDate } = body;
 
-        // 1. Verify the person making the request is an Admin
         const supabase = await createClient();
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
-        if (authError || !authUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (authError || !authUser) 
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { data: adminProfile } = await supabase
             .from('users')
@@ -23,13 +23,11 @@ export const POST = async (request: Request) => {
             return NextResponse.json({ error: 'Not authorized to manage budgets.' }, { status: 403 });
         }
 
-        // 2. Initialize the Admin Client to bypass RLS for updates
         const adminAuthClient = createAdminClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
-        // Security Check: Verify the team belongs to the admin's startup
         const { data: targetTeam } = await adminAuthClient
             .from('teams')
             .select('startup_id')
@@ -40,9 +38,8 @@ export const POST = async (request: Request) => {
             return NextResponse.json({ error: 'Team not found in your workspace.' }, { status: 403 });
         }
 
-        // 3. Update or Insert the budget
         if (budgetId) {
-            // Update existing budget
+            
             const { error: updateError } = await adminAuthClient
                 .from('budgets')
                 .update({ 
@@ -54,7 +51,7 @@ export const POST = async (request: Request) => {
 
             if (updateError) throw updateError;
         } else {
-            // Create a new budget for this team
+            
             const { error: insertError } = await adminAuthClient
                 .from('budgets')
                 .insert({ 

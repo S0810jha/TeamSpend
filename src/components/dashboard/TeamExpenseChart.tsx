@@ -2,12 +2,10 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-// Modern, accessible color palette for the chart
 const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#9333ea', '#475569'];
 
 export default function TeamExpenseChart({ data }: { data: { name: string, value: number }[] }) {
-  
-  // If there is no data, show a nice empty state instead of a broken chart
+
   if (!data || data.length === 0) {
     return (
       <div className="h-64 flex flex-col items-center justify-center text-slate-400">
@@ -28,7 +26,7 @@ export default function TeamExpenseChart({ data }: { data: { name: string, value
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={70} // This makes it a doughnut chart instead of a solid pie!
+            innerRadius={70} 
             outerRadius={90}
             paddingAngle={3}
             dataKey="value"
@@ -38,7 +36,6 @@ export default function TeamExpenseChart({ data }: { data: { name: string, value
             ))}
           </Pie>
           <Tooltip 
-            // 🟢 FIXED: Changed 'value: number' to 'value: any' and wrapped in Number()
             formatter={(value: any) => [`$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Spent']}
             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
           />

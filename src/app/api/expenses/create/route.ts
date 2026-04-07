@@ -11,7 +11,6 @@ export const POST = async (request: Request) => {
 
         if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        // FIX: We need the user's startup_id so the Admin can actually see this expense!
         const { data: userProfile } = await supabase
             .from('users')
             .select('startup_id')
@@ -47,10 +46,12 @@ export const POST = async (request: Request) => {
         const endDate = new Date(budgetObj.end_date);
         endDate.setHours(23, 59, 59, 999); 
 
-        if (today < startDate) return NextResponse.json({ error: 'Your budget cycle has not started yet.' }, { status: 403 });
-        if (today > endDate) return NextResponse.json({ error: 'Your budget cycle has expired.' }, { status: 403 });
+        if (today < startDate) 
+            return NextResponse.json({ error: 'Your budget cycle has not started yet.' }, { status: 403 });
 
-        // FIX: Insert the startup_id here!
+        if (today > endDate) 
+            return NextResponse.json({ error: 'Your budget cycle has expired.' }, { status: 403 });
+
         const { error: insertError } = await supabase
             .from('expenses')
             .insert({

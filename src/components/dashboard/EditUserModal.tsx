@@ -24,7 +24,6 @@ export default function EditUserModal({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // FIX 1: Create an easy boolean to check if the target user is an Admin
   const isAdmin = user.role === 'ADMIN';
 
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -39,7 +38,6 @@ export default function EditUserModal({
       await axios.post("/api/users/update", {
         userId: user.id,
         fullName: formData.get("fullName"),
-        // If they are an admin, the disabled dropdowns won't send data, so we force the original values!
         role: isAdmin ? 'ADMIN' : formData.get("role"),
         teamId: isAdmin ? currentTeamId : formData.get("teamId"),
       });
@@ -128,7 +126,6 @@ export default function EditUserModal({
                   name="role"
                   defaultValue={user.role}
                   required
-                  // FIX 2: Disable if the user is an admin!
                   disabled={confirmDelete || isDeleting || isAdmin}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none text-sm bg-white disabled:bg-slate-50 disabled:text-slate-500"
                 >
@@ -143,7 +140,6 @@ export default function EditUserModal({
                 <select
                   name="teamId"
                   defaultValue={currentTeamId || ""}
-                  // FIX 3: Disable if the user is an admin!
                   disabled={confirmDelete || isDeleting}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none text-sm bg-white disabled:bg-slate-50 disabled:text-slate-500"
                 >
@@ -156,7 +152,6 @@ export default function EditUserModal({
                 </select>
               </div>
 
-              {/* FIX 4: Show a warning message so the Admin understands why the dropdowns are locked */}
               {isAdmin && (
                 <div className="p-3 bg-amber-50 text-amber-700 text-xs rounded-lg border border-amber-100 font-medium">
                   System Roles cannot be changed for Admin accounts.

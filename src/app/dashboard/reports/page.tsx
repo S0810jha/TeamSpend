@@ -6,7 +6,6 @@ import EmployeeMonthlyChart from '@/components/dashboard/EmployeeMonthlyChart';
 import Link from 'next/link';
 import { JSX } from 'react';
 
-// --- TYPES FOR TYPE SAFETY ---
 interface Expense {
   id: string;
   amount: number;
@@ -24,13 +23,11 @@ interface Team {
   name: string;
 }
 
-// Monthly data object for the chart
 type MonthlyDataEntry = {
   month: string;
-  [employeeName: string]: string | number; // Allows dynamic employee name keys
+  [employeeName: string]: string | number; 
 };
 
-// --- CATEGORY STYLING ---
 const CATEGORY_MAP: Record<string, { icon: JSX.Element, color: string, bg: string, hex: string }> = {
   Software: { bg: 'bg-blue-50', color: 'text-blue-600', hex: '#3b82f6', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg> },
   Marketing: { bg: 'bg-purple-50', color: 'text-purple-600', hex: '#a855f7', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg> },
@@ -63,7 +60,6 @@ export default async function AnalystReportsPage({
   const resolvedParams = await searchParams;
   const currentTeamFilter = resolvedParams?.team || 'ALL';
 
-  // 1. Fetch data with casting to remove 'any'
   const { data: allExpensesData } = await supabase
     .from('expenses')
     .select('id, amount, description, category, status, created_at, team_id, users(full_name, role), teams(id, name)')
@@ -79,7 +75,6 @@ export default async function AnalystReportsPage({
     
   const teamsList = (teamsData as unknown as Team[]) || [];
 
-  // 2. Apply Filters
   const filteredExpenses = currentTeamFilter === 'ALL' 
     ? allExpenses 
     : allExpenses.filter(e => e.teams?.id === currentTeamFilter);
@@ -87,9 +82,6 @@ export default async function AnalystReportsPage({
   const approvedExpenses = filteredExpenses.filter(e => e.status === 'APPROVED');
   const pendingExpenses = filteredExpenses.filter(e => e.status === 'PENDING');
 
-  // --- DATA CRUNCHING ---
-
-  // 1. Line Chart
   const monthlyDataMap: Record<string, number> = {};
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   monthNames.forEach(m => monthlyDataMap[m] = 0);
@@ -104,13 +96,11 @@ export default async function AnalystReportsPage({
 
   const chartMonthlyData = monthNames.map(month => ({ month, spend: monthlyDataMap[month] }));
 
-  // 2. Donut Chart
   const chartCategoryData = Object.keys(CATEGORY_MAP).map(cat => {
     const total = approvedExpenses.filter(e => e.category === cat).reduce((sum, e) => sum + Number(e.amount), 0);
     return { name: cat, value: total, color: CATEGORY_MAP[cat].hex };
   }).filter(data => data.value > 0); 
 
-  // 3. Stacked Employee Chart (No 'any' in map)
   const monthlyEmployeeDataMap: Record<string, MonthlyDataEntry> = {};
   const uniqueEmployees = new Set<string>();
 
@@ -133,7 +123,6 @@ export default async function AnalystReportsPage({
   const chartMonthlyEmployeeData = monthNames.map(m => monthlyEmployeeDataMap[m]);
   const employeeNames = Array.from(uniqueEmployees);
 
-  // Stats
   const totalYtdSpend = approvedExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const totalPendingLiability = pendingExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const ledgerExpenses = [...approvedExpenses].reverse();

@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
-
-// Assuming you have a Logo component. If not, replace <Logo /> with an image or text.
 import Logo from "@/components/Logo"; 
 
 const RegisterPage = () => {
@@ -18,7 +16,6 @@ const RegisterPage = () => {
     setLoading(true);
     setErrorMsg("");
 
-    // FormData relies on the 'name' attributes of your HTML inputs
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email");
     const password = formData.get("password");
@@ -34,6 +31,7 @@ const RegisterPage = () => {
       });
       
       router.push("/dashboard");
+
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         setErrorMsg(error.response.data.error || "Something went wrong");
@@ -58,7 +56,6 @@ const RegisterPage = () => {
           </p>
         </div>
 
-        {/* Fixed: Changed 'error' to 'errorMsg' to match your state variable */}
         {errorMsg && (
           <div className="mb-6 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100 font-medium">
             {errorMsg}
@@ -70,7 +67,6 @@ const RegisterPage = () => {
             <label className="block text-sm font-semibold text-slate-700 mb-1">
               Startup Name
             </label>
-            {/* Added name="startupName", removed value/onChange */}
             <input
               type="text"
               name="startupName"
@@ -80,7 +76,6 @@ const RegisterPage = () => {
             />
           </div>
           
-          {/* Added Full Name input so the API receives the required data */}
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">
               Your Full Name
@@ -98,7 +93,6 @@ const RegisterPage = () => {
             <label className="block text-sm font-semibold text-slate-700 mb-1">
               Founder Email
             </label>
-            {/* Added name="email", removed value/onChange */}
             <input
               type="email"
               name="email"
@@ -112,7 +106,6 @@ const RegisterPage = () => {
             <label className="block text-sm font-semibold text-slate-700 mb-1">
               Password
             </label>
-            {/* Added name="password", removed value/onChange */}
             <input
               type="password"
               name="password"

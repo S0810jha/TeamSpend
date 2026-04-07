@@ -62,7 +62,6 @@ const CreateTeamForm = ({ startupId }: { startupId: string }) => {
   return (
     <form onSubmit={handleCreateTeam} className="space-y-4">
       
-      {/* Fixed height message container */}
       <div className="flex justify-center w-full min-h-[40px]">
         {errorMsg && (
           <div className="p-2 bg-red-50 text-red-700 w-full text-center text-sm rounded-lg border border-red-100">
@@ -76,7 +75,6 @@ const CreateTeamForm = ({ startupId }: { startupId: string }) => {
         )}
       </div>
 
-      {/* Inputs stacked vertically for the narrow column */}
       <div className="space-y-4">
         <div className="w-full">
           <label className="block text-sm font-semibold text-slate-700 mb-1">Department Name</label>

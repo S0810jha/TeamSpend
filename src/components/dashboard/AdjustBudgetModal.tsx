@@ -36,7 +36,8 @@ export default function AdjustBudgetModal({ teamId, budgetId, currentAmount, sta
       });
 
       setIsOpen(false);
-      router.refresh(); // Instantly update the dashboard
+      router.refresh(); 
+      
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         setErrorMsg(error.response.data.error || "Failed to update budget");

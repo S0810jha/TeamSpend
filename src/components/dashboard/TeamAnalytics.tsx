@@ -5,7 +5,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
 
-// Added basic interfaces to avoid 'any' warnings
 interface Expense {
   id: string;
   amount: number;
@@ -21,15 +20,12 @@ interface Member {
 export default function TeamAnalytics({ expenses, members }: { expenses: Expense[], members: Member[] }) {
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
 
-  // Filter expenses based on the dropdown selection
   const filteredExpenses = selectedUserId === 'all' 
     ? expenses 
     : expenses.filter(exp => exp.user_id === selectedUserId);
 
-  // Calculate the total spent for the selected view
   const totalSpent = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
 
-  // Crunch data for the Recharts Pie Chart
   const categoryTotals = filteredExpenses.reduce((acc: Record<string, number>, exp) => {
     acc[exp.category] = (acc[exp.category] || 0) + Number(exp.amount);
     return acc;
@@ -39,15 +35,13 @@ export default function TeamAnalytics({ expenses, members }: { expenses: Expense
     .map(key => ({ name: key, value: categoryTotals[key] }))
     .sort((a, b) => b.value - a.value);
 
-  // Helper to get the selected person's name for UI text
   const selectedName = selectedUserId === 'all' 
     ? 'Entire Department' 
     : members.find(m => m.id === selectedUserId)?.full_name || 'Employee';
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col lg:flex-row overflow-hidden">
-      
-      {/* Left Side: Controls & Dynamic Stats */}
+
       <div className="p-5 lg:w-1/3 bg-slate-50/50 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col">
         <div>
           <h3 className="text-sm font-bold text-slate-900 tracking-tight mb-1">Interactive Analytics</h3>
@@ -81,7 +75,6 @@ export default function TeamAnalytics({ expenses, members }: { expenses: Expense
         </div>
       </div>
 
-      {/* Right Side: The Chart */}
       <div className="p-4 lg:w-2/3 flex items-center justify-center min-h-[260px]">
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={260}>
@@ -101,7 +94,6 @@ export default function TeamAnalytics({ expenses, members }: { expenses: Expense
                 ))}
               </Pie>
               <Tooltip 
-                // 🟢 FIXED: Using 'any' and Number() to satisfy Recharts Formatter type requirements
                 formatter={(value: any) => [`$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Spent']}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)', fontSize: '12px', fontWeight: 'bold' }}
               />

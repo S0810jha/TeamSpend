@@ -27,9 +27,6 @@ export const POST = async (request: Request) => {
             );
         }
 
-        // ==========================================
-        // CREATE TEAM
-        // ==========================================
         const { data: newTeam, error: teamError } = await supabase
         .from('teams')
         .insert([
@@ -43,13 +40,9 @@ export const POST = async (request: Request) => {
 
         if (teamError) {
             console.error("🚨 TEAM ERROR:", teamError);
-            // Send the EXACT Supabase error to the frontend!
             return NextResponse.json({ error: `Team Error: ${teamError.message}` }, { status: 400 });
         }   
 
-        // ==========================================
-        // CREATE BUDGET
-        // ==========================================
         const { error: budgetError } = await supabase
         .from('budgets')
         .insert([
@@ -67,7 +60,6 @@ export const POST = async (request: Request) => {
                 .from('teams')
                 .delete()
                 .eq('id', newTeam.id);
-            // Send the EXACT Supabase error to the frontend!
             return NextResponse.json({ error: `Budget Error: ${budgetError.message}` }, { status: 400 });
         }
 
