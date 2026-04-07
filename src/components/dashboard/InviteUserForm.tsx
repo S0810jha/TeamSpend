@@ -62,63 +62,65 @@ const InviteUserForm = ({ startupId, teams }: { startupId: string, teams: Team[]
   }
 
   return (
-    <form onSubmit={handleInviteUser} className="space-y-3">
+    <form onSubmit={handleInviteUser} className="flex flex-col h-full space-y-4 sm:space-y-3">
       
-      <div className="flex justify-center w-full min-h-[35px]">
+      {/* Alert Messages - Flex container ensures it doesn't break layout on multiline mobile text */}
+      <div className="flex justify-center w-full min-h-[40px] sm:min-h-[35px]">
         {errorMsg && (
-          <div className="p-2 bg-red-50 text-red-700 w-full text-center text-sm rounded-lg border border-red-100">
+          <div className="p-2.5 sm:p-2 bg-red-50 text-red-700 w-full text-center text-sm rounded-lg border border-red-100 flex items-center justify-center leading-tight">
             {errorMsg}
           </div>
         )}
         {successMsg && (
-          <div className="p-1 bg-green-50 text-green-700 w-full text-center text-sm rounded-lg border border-green-100">
+          <div className="p-2.5 sm:p-2 bg-green-50 text-green-700 w-full text-center text-sm rounded-lg border border-green-100 flex items-center justify-center leading-tight">
             {successMsg}
           </div>
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4 sm:space-y-3">
         <div className="w-full">
-          <label className="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 sm:mb-1">Full Name</label>
           <input
             type="text"
             name="fullName"
             required
             placeholder="Jane Doe"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-sm"
+            // Mobile: text-base prevents iOS zoom, py-2.5 increases touch target. Desktop: reverts to text-sm and py-2
+            className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-base sm:text-sm"
           />
         </div>
 
         <div className="w-full">
-          <label className="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 sm:mb-1">Email Address</label>
           <input
             type="email"
             name="email"
             required
             placeholder="jane@startup.com"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-sm"
+            className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-base sm:text-sm"
           />
         </div>
 
         <div className="w-full">
-            <label className="block text-sm font-semibold text-slate-700 mb-1">Temporary Password</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5 sm:mb-1">Temporary Password</label>
             <input
               type="text" 
               name="password"
               required
               minLength={6}
               placeholder="secret123"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-sm"
+              className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-base sm:text-sm"
             />
         </div>
 
         <div className="w-full">
-          <label className="block text-sm font-semibold text-slate-700 mb-1">System Role</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 sm:mb-1">System Role</label>
           <select
             name="role"
             required
             defaultValue="EMPLOYEE"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-sm bg-white"
+            className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-base sm:text-sm bg-white"
           >
             <option value="EMPLOYEE">Employee (Submit Expenses)</option>
             <option value="ANALYST">Analyst (View Reports)</option>
@@ -127,12 +129,12 @@ const InviteUserForm = ({ startupId, teams }: { startupId: string, teams: Team[]
         </div>
 
         <div className="w-full">
-          <label className="block text-sm font-semibold text-slate-700 mb-1">Assign to Team</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 sm:mb-1">Assign to Team</label>
           <select
             name="teamId"
             required
             defaultValue=""
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-sm bg-white"
+            className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-base sm:text-sm bg-white"
           >
             <option value="" disabled>
               Select a department...
@@ -146,11 +148,12 @@ const InviteUserForm = ({ startupId, teams }: { startupId: string, teams: Team[]
         </div>
       </div>
 
-      <div className="pt-4">
+      <div className="pt-4 sm:pt-2 mt-auto">
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-lg transition disabled:opacity-70 text-sm"
+          // Mobile: chunkier button (py-3.5) for easier tapping
+          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 sm:py-2.5 rounded-lg transition disabled:opacity-70 text-base sm:text-sm shadow-sm"
         >
           {loading ? "Creating Account..." : "Create Employee Account"}
         </button>
