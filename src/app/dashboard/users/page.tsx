@@ -106,38 +106,48 @@ const UsersPage = async ({ searchParams }: { searchParams: Promise<{ page?: stri
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto h-full flex flex-col">
-      <div className="mb-6 xl:mb-8 flex-shrink-0">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto min-h-screen md:h-full flex flex-col">
+      <div className="mb-6 lg:mb-8 flex-shrink-0">
         <h1 className="text-2xl font-bold text-slate-900">User Directory</h1>
         <p className="mt-1 text-sm text-slate-600">Invite employees, assign roles, and allocate them to teams.</p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 flex-1 min-h-0">
-        <div className="xl:col-span-1 xl:h-full flex flex-col min-h-0">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 xl:overflow-y-auto max-h-full">
+      {/* Changed xl to lg for better tablet responsiveness and added gap handling */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 flex-1 min-h-0">
+        
+        {/* Invite Form Section */}
+        <div className="lg:col-span-1 lg:h-full flex flex-col min-h-0 order-2 lg:order-1">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200 lg:overflow-y-auto max-h-full">
             <h2 className="text-xl font-semibold text-slate-800 mb-6">Add New Employee</h2>
             <InviteUserForm startupId={profile.startup_id} teams={activeTeams} />
           </div>
         </div>
 
-        <div className="xl:col-span-2 xl:h-full flex flex-col min-h-0">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-4 xl:mb-6 flex-shrink-0">
+        {/* User Table Section */}
+        <div className="lg:col-span-2 lg:h-full flex flex-col min-h-0 order-1 lg:order-2">
+          
+          {/* Header & Filters - Stacks smoothly on mobile */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-4 lg:mb-6 flex-shrink-0">
             <div>
               <h2 className="text-xl font-semibold text-slate-800">Active Employees</h2>
               <span className="text-sm font-medium text-slate-500 inline-block mt-1">Found {count || 0} Members</span>
             </div>
-            <UserFilters teams={allTeams || []} />
+            <div className="w-full sm:w-auto">
+              <UserFilters teams={allTeams || []} />
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col min-h-0">
-            <div className="overflow-y-auto flex-1">
-              <table className="w-full text-left text-sm text-slate-600 relative">
+            {/* Added overflow-x-auto to allow horizontal scrolling on mobile devices */}
+            <div className="overflow-auto flex-1 w-full">
+              {/* Added min-w-[650px] to prevent table from squishing to unreadable sizes on mobile */}
+              <table className="w-full text-left text-sm text-slate-600 relative min-w-[650px]">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-800 font-semibold sticky top-0 z-10 shadow-sm">
                   <tr>
-                    <th className="px-6 py-4">Employee Name</th>
-                    <th className="px-6 py-4">System Role</th>
-                    <th className="px-6 py-4">Department</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-4 py-3 sm:px-6 sm:py-4">Employee Name</th>
+                    <th className="px-4 py-3 sm:px-6 sm:py-4">System Role</th>
+                    <th className="px-4 py-3 sm:px-6 sm:py-4">Department</th>
+                    <th className="px-4 py-3 sm:px-6 sm:py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -152,11 +162,11 @@ const UsersPage = async ({ searchParams }: { searchParams: Promise<{ page?: stri
 
                     return (
                       <tr key={user.id} className="hover:bg-slate-50 transition">
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4">
                           <div className="font-bold text-slate-900">{user.full_name || 'Pending Invite...'}</div>
-                          <div className="text-xs text-slate-500 font-medium">{user.email}</div>
+                          <div className="text-xs text-slate-500 font-medium truncate max-w-[150px] sm:max-w-none">{user.email}</div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold
                             ${user.role === 'ADMIN' ? 'bg-purple-50 text-purple-700 border border-purple-100' : ''}
                             ${user.role === 'ANALYST' ? 'bg-blue-50 text-blue-700 border border-blue-100' : ''}
@@ -165,7 +175,7 @@ const UsersPage = async ({ searchParams }: { searchParams: Promise<{ page?: stri
                             {user.role}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                           {teamName !== 'Unassigned' ? (
                             <div className="flex flex-col items-start gap-1">
                               <span className="text-slate-700 font-semibold">{teamName}</span>
@@ -177,7 +187,7 @@ const UsersPage = async ({ searchParams }: { searchParams: Promise<{ page?: stri
                             <span className="text-slate-400 italic">Unassigned</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 text-right">
                           <EditUserModal 
                             user={{ id: user.id, full_name: user.full_name || '', role: user.role }} 
                             teams={activeTeams} 
@@ -187,24 +197,32 @@ const UsersPage = async ({ searchParams }: { searchParams: Promise<{ page?: stri
                       </tr>
                     );
                   })}
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-slate-400 italic text-sm">
+                        No active employees found.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
 
-            <div className="border-t border-slate-200 bg-white px-6 py-4 flex items-center justify-between">
-              <p className="text-sm text-slate-500 hidden sm:block">
+            {/* Pagination - Stack on mobile, inline on desktop */}
+            <div className="border-t border-slate-200 bg-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-sm text-slate-500 text-center sm:text-left">
                 Showing <span className="font-medium">{count === 0 ? 0 : from + 1}</span> to <span className="font-medium">{Math.min(to + 1, count || 0)}</span> of <span className="font-medium">{count}</span> results
               </p>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-end">
                 {currentPage > 1 ? (
-                  <Link href={buildPaginationLink(currentPage - 1)} className="px-4 py-2 border border-slate-200 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition">Previous</Link>
+                  <Link href={buildPaginationLink(currentPage - 1)} className="px-4 py-2 border border-slate-200 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition w-full sm:w-auto text-center">Previous</Link>
                 ) : (
-                  <button disabled className="px-4 py-2 border border-slate-200 rounded-md text-sm font-medium text-slate-400 bg-slate-50 cursor-not-allowed">Previous</button>
+                  <button disabled className="px-4 py-2 border border-slate-200 rounded-md text-sm font-medium text-slate-400 bg-slate-50 cursor-not-allowed w-full sm:w-auto">Previous</button>
                 )}
                 {currentPage < totalPages ? (
-                  <Link href={buildPaginationLink(currentPage + 1)} className="px-4 py-2 border border-slate-200 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition">Next</Link>
+                  <Link href={buildPaginationLink(currentPage + 1)} className="px-4 py-2 border border-slate-200 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition w-full sm:w-auto text-center">Next</Link>
                 ) : (
-                  <button disabled className="px-4 py-2 border border-slate-200 rounded-md text-sm font-medium text-slate-400 bg-slate-50 cursor-not-allowed">Next</button>
+                  <button disabled className="px-4 py-2 border border-slate-200 rounded-md text-sm font-medium text-slate-400 bg-slate-50 cursor-not-allowed w-full sm:w-auto">Next</button>
                 )}
               </div>
             </div>
