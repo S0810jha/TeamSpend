@@ -62,9 +62,9 @@ const InviteUserForm = ({ startupId, teams }: { startupId: string, teams: Team[]
   }
 
   return (
-    <form onSubmit={handleInviteUser} className="flex flex-col h-full space-y-4 sm:space-y-3">
+    // Fixed: Removed strict h-full for mobile to allow natural flow, keeping flex-1 to push button down if there is space
+    <form onSubmit={handleInviteUser} className="flex flex-col flex-1 space-y-4 sm:space-y-3 pb-2">
       
-      {/* Alert Messages - Flex container ensures it doesn't break layout on multiline mobile text */}
       <div className="flex justify-center w-full min-h-[40px] sm:min-h-[35px]">
         {errorMsg && (
           <div className="p-2.5 sm:p-2 bg-red-50 text-red-700 w-full text-center text-sm rounded-lg border border-red-100 flex items-center justify-center leading-tight">
@@ -86,7 +86,6 @@ const InviteUserForm = ({ startupId, teams }: { startupId: string, teams: Team[]
             name="fullName"
             required
             placeholder="Jane Doe"
-            // Mobile: text-base prevents iOS zoom, py-2.5 increases touch target. Desktop: reverts to text-sm and py-2
             className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition text-base sm:text-sm"
           />
         </div>
@@ -148,12 +147,13 @@ const InviteUserForm = ({ startupId, teams }: { startupId: string, teams: Team[]
         </div>
       </div>
 
-      <div className="pt-4 sm:pt-2 mt-auto">
+      {/* Fixed: Added pt-4 to guarantee space above the button, kept mt-auto to push it down on large screens */}
+      <div className="pt-4 mt-auto">
         <button
           type="submit"
           disabled={loading}
-          // Mobile: chunkier button (py-3.5) for easier tapping
-          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 sm:py-2.5 rounded-lg transition disabled:opacity-70 text-base sm:text-sm shadow-sm"
+          // Fixed: Changed text-base back to text-sm since buttons don't trigger iOS zoom
+          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 sm:py-2.5 rounded-lg transition disabled:opacity-70 text-sm shadow-sm"
         >
           {loading ? "Creating Account..." : "Create Employee Account"}
         </button>
